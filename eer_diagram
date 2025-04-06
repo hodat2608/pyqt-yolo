@@ -1,0 +1,13 @@
+digraph EER_Diagram {
+	Customer [fillcolor=lightblue shape=box style=filled]
+	Order [fillcolor=lightgreen shape=box style=filled]
+	Product [fillcolor=lightyellow shape=box style=filled]
+	VIP_Customer [fillcolor=lightcoral shape=ellipse style=filled]
+	Customer -> VIP_Customer [label=ISA arrowhead=empty]
+	Places [fillcolor=gray shape=diamond style=filled]
+	Customer -> Places
+	Places -> Order
+	Contains [fillcolor=gray shape=diamond style=filled]
+	Order -> Contains
+	Contains -> Product
+}

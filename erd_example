@@ -1,0 +1,12 @@
+digraph "ERD Example" {
+	graph [fontcolor="#2D3436" fontname="Sans-Serif" fontsize=15 label="ERD Example" nodesep=0.60 pad=2.0 rankdir=LR ranksep=0.75 splines=ortho]
+	node [fixedsize=true fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 height=1.4 imagescale=true labelloc=b shape=box style=rounded width=1.4]
+	edge [color="#7B8894"]
+	bbdc962d3df34284bcfd2fcee9fd595d [label=auth_user height=1.9 image="./user_icon.png" shape=none]
+	"4dd50a014b954515bbe4c6de8f50922f" [label=auth_group height=1.9 image="./group_icon.png" shape=none]
+	"4a32c12fde184c6ea5585a107a7b3fbb" [label=auth_permission height=1.9 image="./permission_icon.png" shape=none]
+	ecb1249d4cbc4268beb7c304ace21f5f [label=Database height=1.9 image="C:\Users\BTTB\AppData\Local\Programs\Python\Python312\Lib\site-packages\resources/aws/database\rds.png" shape=none]
+	bbdc962d3df34284bcfd2fcee9fd595d -> "4dd50a014b954515bbe4c6de8f50922f" [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	bbdc962d3df34284bcfd2fcee9fd595d -> "4a32c12fde184c6ea5585a107a7b3fbb" [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"4dd50a014b954515bbe4c6de8f50922f" -> "4a32c12fde184c6ea5585a107a7b3fbb" [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+}
