@@ -10,8 +10,8 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from form_mysql.layout_cameratab import Ui_MainWindow as Ui_CameraTab
-from form_mysql.layout_modeltab import Ui_MainWindow as Ui_ModelTab
+from module_1.layout_cameratab import Ui_MainWindow as Ui_CameraTab
+from module_1.layout_modeltab import Ui_MainWindow as Ui_ModelTab
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEdit, 
@@ -23,7 +23,7 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont, QIcon, QPixmap
 import mysql.connector
 from mysql.connector import Error
-from form_mysql.mysql_insert import Connect2Mysql
+from module_1.MySQL_WorkBench import Connect2Mysql
 
 class Ui_MainWindow(object):
     def __init__(self):

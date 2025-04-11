@@ -12,7 +12,31 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHeaderView
+
+COLUMN_MAPPING = {
+    "Label Name": "`Label_Name`",
+    "Join": "`Join`",
+    "OK": "`OK`",
+    "NG": "`NG`",
+    "Quantity": "`Quantity`",
+    "Width Min": "`Width_Min`",
+    "Width Max": "`Width_Max`",
+    "Height Min": "`Height_Min`",
+    "Height Max": "`Height_Max`",
+    "Assign Value": "`Assign_Value`",
+    "Confidence": "`Confidence`"
+}
+
 class Ui_MainWindow(object):
+
+    def __init__(self):
+        self.ui_child = None 
+        self.i_code = None
+        self.db = None
+        self.connect_db = None
+        self.cursor = None
+        self.model = None
+        self.model_column = list(COLUMN_MAPPING.keys())
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -525,9 +549,9 @@ class Ui_MainWindow(object):
         font.setWeight(50)
         self.comboBox_4.setFont(font)
         self.comboBox_4.setObjectName("comboBox_4")
-        self.comboBox_4.addItem("")
-        self.comboBox_4.addItem("")
-        self.comboBox_4.addItem("")
+        # self.comboBox_4.addItem("")
+        # self.comboBox_4.addItem("")
+        # self.comboBox_4.addItem("")
         self.gridLayout_3.addWidget(self.comboBox_4, 5, 1, 1, 1)
         self.label_4 = QtWidgets.QLabel(self.frame_2)
         font = QtGui.QFont()
@@ -546,12 +570,12 @@ class Ui_MainWindow(object):
         font.setWeight(50)
         self.comboBox_6.setFont(font)
         self.comboBox_6.setObjectName("comboBox_6")
-        self.comboBox_6.addItem("")
-        self.comboBox_6.addItem("")
-        self.comboBox_6.addItem("")
-        self.comboBox_6.addItem("")
-        self.comboBox_6.addItem("")
-        self.comboBox_6.addItem("")
+        # self.comboBox_6.addItem("")
+        # self.comboBox_6.addItem("")
+        # self.comboBox_6.addItem("")
+        # self.comboBox_6.addItem("")
+        # self.comboBox_6.addItem("")
+        # self.comboBox_6.addItem("")
         self.gridLayout_3.addWidget(self.comboBox_6, 6, 1, 1, 1)
         self.label_9 = QtWidgets.QLabel(self.frame_2)
         font = QtGui.QFont()
@@ -612,6 +636,10 @@ class Ui_MainWindow(object):
         font.setWeight(50)
         self.spinBox.setFont(font)
         self.spinBox.setObjectName("spinBox")
+        self.spinBox.setMinimum(0)
+        self.spinBox.setMaximum(100)
+        self.spinBox.setSingleStep(2)
+        self.spinBox.setValue(20)
         self.gridLayout_3.addWidget(self.spinBox, 3, 1, 1, 1)
 
         self.pushButton_3 = QtWidgets.QPushButton(self.frame_2)
@@ -698,7 +726,7 @@ class Ui_MainWindow(object):
         font.setWeight(50)
         self.comboBox_5.setFont(font)
         self.comboBox_5.setObjectName("comboBox_5")
-        self.comboBox_5.addItem("")
+        # self.comboBox_5.addItem("")
         self.gridLayout_3.addWidget(self.comboBox_5, 7, 1, 1, 2)
         self.gridLayout_7.addWidget(self.frame_2, 0, 0, 1, 1)
 
@@ -709,12 +737,8 @@ class Ui_MainWindow(object):
         self.tableView.setObjectName("tableView")
         self.tableView.horizontalHeader().setStretchLastSection(True)
         self.tableView.verticalHeader().setStretchLastSection(False)
-        self.model = QStandardItemModel(0, 11) 
-        self.model.setHorizontalHeaderLabels([
-            "Label Name", "Join", "OK", "NG", "Quantity",
-            "Width Min", "Width Max", "Height Min", "Height Max",
-            "Assign Value", "Confidence"
-        ])
+        self.model = QStandardItemModel(0, len(self.model_column)) 
+        self.model.setHorizontalHeaderLabels(self.model_column)
         self.tableView.setModel(self.model)
         self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
@@ -772,16 +796,16 @@ class Ui_MainWindow(object):
         self.comboBox_3.setItemText(2, _translate("MainWindow", "768"))
         self.comboBox_3.setItemText(3, _translate("MainWindow", "810"))
         self.comboBox_3.setItemText(4, _translate("MainWindow", "1048"))
-        self.comboBox_4.setItemText(0, _translate("MainWindow", "1"))
-        self.comboBox_4.setItemText(1, _translate("MainWindow", "2"))
-        self.comboBox_4.setItemText(2, _translate("MainWindow", "3"))
+        # self.comboBox_4.setItemText(0, _translate("MainWindow", "1"))
+        # self.comboBox_4.setItemText(1, _translate("MainWindow", "2"))
+        # self.comboBox_4.setItemText(2, _translate("MainWindow", "3"))
         self.label_4.setText(_translate("MainWindow", "Image Size:"))
-        self.comboBox_6.setItemText(0, _translate("MainWindow", "1"))
-        self.comboBox_6.setItemText(1, _translate("MainWindow", "2"))
-        self.comboBox_6.setItemText(2, _translate("MainWindow", "3"))
-        self.comboBox_6.setItemText(3, _translate("MainWindow", "4"))
-        self.comboBox_6.setItemText(4, _translate("MainWindow", "5"))
-        self.comboBox_6.setItemText(5, _translate("MainWindow", "6"))
+        # self.comboBox_6.setItemText(0, _translate("MainWindow", "1"))
+        # self.comboBox_6.setItemText(1, _translate("MainWindow", "2"))
+        # self.comboBox_6.setItemText(2, _translate("MainWindow", "3"))
+        # self.comboBox_6.setItemText(3, _translate("MainWindow", "4"))
+        # self.comboBox_6.setItemText(4, _translate("MainWindow", "5"))
+        # self.comboBox_6.setItemText(5, _translate("MainWindow", "6"))
         self.label_9.setText(_translate("MainWindow", "Camera ID"))
         self.comboBox_2.setItemText(0, _translate("MainWindow", "Yolo.v5"))
         self.label_6.setText(_translate("MainWindow", "Confidence threshold:"))
@@ -791,18 +815,4 @@ class Ui_MainWindow(object):
         self.pushButton_2.setText(_translate("MainWindow", "Load Model"))
         self.label_2.setText(_translate("MainWindow", "Weight used path:"))
         self.label.setText(_translate("MainWindow", "Weight path:"))
-        self.comboBox_5.setItemText(0, _translate("MainWindow", "AWD189RT"))
-
-
-# if __name__ == "__main__":
-    # import sys
-    # from PyQt5.QtWidgets import QHeaderView
-    # app = QtWidgets.QApplication(sys.argv)
-    # app.setStyle('Fusion')
-    # MainWindow = QtWidgets.QMainWindow()
-    # ui = Ui_MainWindow()
-    # ui.setupUi(MainWindow)
-    # ui.pushButton.clicked.connect(ui.browse_file)
-    # # ui.populateTable()
-    # MainWindow.show()
-    # sys.exit(app.exec_())
+        # self.comboBox_5.setItemText(0, _translate("MainWindow", "AWD189RT"))

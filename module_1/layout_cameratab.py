@@ -9,7 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from form_mysql.layout_modeltab import Ui_MainWindow as Ui_ModelTab
+from module_1.layout_modeltab import Ui_MainWindow as Ui_ModelTab
 
 class Ui_MainWindow(object):
     def __init__(self):

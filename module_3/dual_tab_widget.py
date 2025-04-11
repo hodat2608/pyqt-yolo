@@ -9,8 +9,8 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from layout_congfiguration_model import Ui_MainWindow  as uicmin
-from process import process
+from module_3.layout_configuration_options import Ui_MainWindow  as uicmain
+from module_3.upload_progress_uic import Process_Model 
 import sys
 
 class Ui_MainWindow(object):
@@ -75,7 +75,10 @@ class Ui_MainWindow(object):
         self.tabWidget_2.setCurrentIndex(0)
         self.tabWidget_3.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
-        self.select_database()
+        try:
+            self.update_database()
+        except Exception as e:
+            print(f"Error updating database: {e}")
         # self.update_product_codes(2)
 
     def retranslateUi(self, MainWindow):
@@ -88,78 +91,80 @@ class Ui_MainWindow(object):
         self.tabWidget_3.setTabText(self.tabWidget_3.indexOf(self.tab_6), _translate("MainWindow", "model 2"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "camera 2"))
 
-    def select_database(self):
+
+    def _select_database(self):
+        self.cursor.execute("USE %s" % self.db)
+
+    def _get_item_code_id(self, item_code):
+        self.cursor.execute(
+            "SELECT id FROM ITEMS_CODE WHERE name_line_code = %s",
+            (item_code,)
+        )
+        result = self.cursor.fetchone()
+        return result[0] if result else None
+
+    def _get_camera_records(self, item_code_id):
+        self.cursor.execute(
+            "SELECT * FROM NUMS_CAMERA WHERE item_code_id = %s",
+            (item_code_id,)
+        )
+        return self.cursor.fetchall()
+
+    def _get_models_for_camera(self, camera_id):
+        self.cursor.execute(
+            "SELECT * FROM NUMS_MODEL WHERE camera_id = %s",
+            (camera_id,)
+        )
+        return self.cursor.fetchall()
+
+    def _create_camera_tab(self):
+        tab = QtWidgets.QWidget()
+        layout = QtWidgets.QHBoxLayout(tab)
+        inner_tab = QtWidgets.QTabWidget()
+        layout.addWidget(inner_tab)
+        return tab
+
+    def _create_model_tabs(self,models,camera_name,camera_id):
+        for model_index, model_record in enumerate(models):
+            model_number = model_index + 1
+            new_tab = QtWidgets.QMainWindow()
+            ui_child = uicmain()
+            ui_child.setupUi(new_tab)
+
+            self.processor = Process_Model(ui_child)
+            self.processor.assign_values(model_number, camera_name, self.i_code)
+            self.ui_instances[(camera_name, model_number)] = ui_child
+            self.processor.load_parameter(camera_id, model_number,self.cursor,self.connect_db,self.tabWidget,self.ui_instances)
+            ui_child.pushButton.clicked.connect(lambda _, u=self.processor: u.browse_file())
+            ui_child.pushButton_2.clicked.connect(lambda _, u=self.processor: u.load_model())
+            ui_child.pushButton_6.clicked.connect(lambda _, u=self.processor: u.save_values_injection_safe(self.cursor, self.connect_db))
+            ui_child.pushButton_5.clicked.connect(lambda _, u=self.processor: u.event_clock(
+                1, 1, self.dict, self.tabWidget, self.ui_instances))
+            ui_child.pushButton_8.clicked.connect(lambda _, u=self.processor: u.print_table_data(self.ui_instances))
+            ui_child.pushButton_21.clicked.connect(lambda _, u=self.processor: u.browse_file_detect())
+            ui_child.pushButton_22.clicked.connect(lambda _, u=self.processor: u.detect_img())
+            self.tabWidget_2.addTab(new_tab, f"Model {model_number}")
+            self.product_code_forms.append(new_tab)
+
+    def update_database(self):
         self.ui_instances = {}
         self.tabWidget_2.clear()
         self.tabWidget.clear()
         self.product_code_forms = []
-        self.cursor.execute(f"USE {self.db}")
-        self.cursor.execute("""
-            SELECT id FROM ITEMS_CODE 
-            WHERE name_line_code = %s
-        """, (self.i_code,))
-        result = self.cursor.fetchone()[0]
-        self.cursor.execute("""
-            SELECT * FROM NUMS_CAMERA 
-            WHERE item_code_id = %s
-        """, (result,))
-        records = self.cursor.fetchall()
-        for index,record in enumerate(records):
-            tab = QtWidgets.QWidget()
-            horizontalLayout = QtWidgets.QHBoxLayout(tab)
-            tabWidget_inner = QtWidgets.QTabWidget(tab)
-            horizontalLayout.addWidget(tabWidget_inner)
-            self.tabWidget.addTab(tab, f"Camera {record[1]}")
-            self.tabWidget_2 = tabWidget_inner
-            self.cursor.execute("""
-                SELECT * FROM NUMS_MODEL
-                WHERE camera_id = %s
-            """, (record[0],))
-            num_model = self.cursor.fetchall()
-            for model_index in range(len(num_model)):
-                new_tab = QtWidgets.QMainWindow()
-                self.ui_child = uicmin()
-                uic_process = process(self.ui_child) 
-                self.ui_child.setupUi(new_tab)  
-                # 🔹 Lưu instance của từng model vào dict
-                self.ui_instances[(record[1], model_index + 1)] = self.ui_child
-                # 🔹 Gán sự kiện
-                self.ui_child.pushButton.clicked.connect(lambda _, u=uic_process: u.browse_file())
-                self.ui_child.pushButton_2.clicked.connect(lambda _, u=uic_process: u.load_model())
-                self.ui_child.pushButton_6.clicked.connect(lambda _, u=uic_process: u.save_data())
-                self.ui_child.pushButton_5.clicked.connect(lambda _, u=uic_process: u.event_clock(1, 1, self.dict, self.tabWidget, self.ui_instances))
-                self.tabWidget_2.addTab(new_tab, f"Model {model_index + 1}")
-                self.product_code_forms.append(new_tab)
+        self._select_database()
+        item_code_id = self._get_item_code_id(self.i_code)
+        if not item_code_id:
+            return
+        camera_records = self._get_camera_records(item_code_id)
+        for index, record in enumerate(camera_records):
+            camera_id, camera_name = record[0], record[1]
+            tab = self._create_camera_tab()
+            self.tabWidget.addTab(tab, f"Camera {camera_name}")
 
-    # def update_product_codes(self, count):
-    #     self.ui_instances = {}
-    #     self.tabWidget_2.clear()
-    #     self.tabWidget.clear()
-    #     self.product_code_forms = []
-    #     print(self.dict)
-    #     for i, j in enumerate(self.dict):
-    #         tab = QtWidgets.QWidget()
-    #         horizontalLayout = QtWidgets.QHBoxLayout(tab)
-    #         tabWidget_inner = QtWidgets.QTabWidget(tab)
-    #         horizontalLayout.addWidget(tabWidget_inner)
-    #         self.tabWidget.addTab(tab, f"Camera {j[1]}")
-    #         self.tabWidget_2 = tabWidget_inner
+            self.tabWidget_2 = tab.findChild(QtWidgets.QTabWidget)
+            models = self._get_models_for_camera(camera_id)
+            self._create_model_tabs(models,camera_name,camera_id)
 
-    #         for model_index in range(j[6]):
-    #             new_tab = QtWidgets.QMainWindow()
-    #             self.ui_child = uicmin()
-    #             uic_process = process(self.ui_child) 
-    #             self.ui_child.setupUi(new_tab)  
-    #             # 🔹 Lưu instance của từng model vào dict
-    #             self.ui_instances[(j[1], model_index + 1)] = self.ui_child
-    #             # 🔹 Gán sự kiện
-    #             self.ui_child.pushButton.clicked.connect(lambda _, u=uic_process: u.browse_file())
-    #             self.ui_child.pushButton_2.clicked.connect(lambda _, u=uic_process: u.load_model())
-    #             self.ui_child.pushButton_6.clicked.connect(lambda _, u=uic_process: u.save_data())
-    #             self.ui_child.pushButton_5.clicked.connect(lambda _, u=uic_process: u.event_clock(1, 1, self.dict, self.tabWidget, self.ui_instances))
-
-    #             self.tabWidget_2.addTab(new_tab, f"Model {model_index + 1}")
-    #             self.product_code_forms.append(new_tab)
 
 class intermediate_layer:
     def __init__(self,i_code,db,connect_db):
@@ -170,8 +175,6 @@ class intermediate_layer:
         self.MainWindow = QtWidgets.QMainWindow()
         ui = Ui_MainWindow(self.i_code,self.db,self.connect_db)
         ui.setupUi(self.MainWindow)
-        # self.MainWindow.show()
         self.MainWindow.showMaximized()
         # sys.exit(app.exec_())
     
-# intermediate_layer()

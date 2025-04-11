@@ -163,9 +163,7 @@ class Ui_MainWindow(object):
                 self.list_item_code[product_data["product_codes"]] = {
                     "device_name": self.ui.lineEdit_name_devic.text(),
                     "camera_tabs": product_data["camera_tabs"]
-                }
-        print("Dữ liệu đã lưu:", self.list_item_code)
-        
+                }        
         QMessageBox.information(None, "Thông báo", "Lưu thông tin thành công!")
 
     def view_data_from_ui(self):

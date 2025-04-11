@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEd
                              QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView,
                              QGroupBox)
 import logging
+
 class Connect2Mysql:
 
     def __init__(self,ui_connection_sql,ui_mainwindow,uicmin):
@@ -17,6 +18,24 @@ class Connect2Mysql:
         self.cursor = None
         logging.basicConfig(filename="error_log.txt", level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s")
     
+    def show_connection_success(self):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle("MySQL Workbench")
+        msg.setText("Successfully made the MySQL connection")
+        msg.setInformativeText(
+            "Information related to this connection:\n\n"
+            "Host: 127.0.0.1\n"
+            "Port: 3306\n"
+            "User: root\n"
+            "SSL: enabled with TLS_AES_128_GCM_SHA256\n\n"
+            "A successful MySQL connection was made with\n"
+            "the parameters defined for this connection."
+        )
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec_()
+
+
     def connect_to_mysql(self):
 
         if not self.ui_connection_sql.lineEdit_hostname.text():
@@ -45,7 +64,7 @@ class Connect2Mysql:
                 port=int(port) if port else 3306 
             )
             if self.connection.is_connected():
-                QMessageBox.information(None, "Kết nối thành công", "Đã kết nối đến MySQL thành công!")
+                self.show_connection_success()
                 self.uicmin.pushButton.setEnabled(True)
             else:
                 QMessageBox.warning(None, "Lỗi", "Không thể kết nối đến MySQL.")
@@ -91,6 +110,7 @@ class Connect2Mysql:
                     """CREATE TABLE IF NOT EXISTS WEIGHTS (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         Weight_Path TEXT NOT NULL,
+                        Weight_Used_Path TEXT NOT NULL,
                         Conf_Value INT DEFAULT 0,
                         Size_Value INT DEFAULT 0,
                         model_id INT,
