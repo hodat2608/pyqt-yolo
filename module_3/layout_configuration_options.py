@@ -37,6 +37,7 @@ class Ui_MainWindow(object):
         self.cursor = None
         self.model = None
         self.model_column = list(COLUMN_MAPPING.keys())
+        self.is_unlocked = False
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -757,6 +758,73 @@ class Ui_MainWindow(object):
         self.toolBox.setCurrentIndex(0)
         self.toolBox.layout().setSpacing(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+        self.set_ui_enabled()
+
+    def toggle_lock(self):
+        if not self.is_unlocked:
+            if self.lock_gui(method=True, boolen=True):
+                self.is_unlocked = True
+                self.pushButton_7.setText("Lock Edit")
+        else:
+            self.lock_gui(method=False, boolen=False)
+            self.is_unlocked = False
+            self.pushButton_7.setText("Edit Parameters")
+
+    def set_ui_enabled(self,enabled=False,lock=False):
+        self.lineEdit.setEnabled(enabled)
+        self.lineEdit_2.setEnabled(enabled)
+        self.lineEdit_3.setEnabled(enabled)
+        self.comboBox.setEnabled(enabled)
+        self.comboBox_2.setEnabled(enabled)
+        self.comboBox_3.setEnabled(enabled)
+        self.comboBox_4.setEnabled(enabled)
+        self.comboBox_5.setEnabled(enabled)
+        self.comboBox_6.setEnabled(enabled)
+        self.dateTimeEdit.setEnabled(enabled)
+        self.spinBox.setEnabled(enabled)
+        self.tableView.setEnabled(enabled)
+        self.toolBox.setEnabled(enabled)
+
+        for button in self.frame.findChildren(QtWidgets.QPushButton):
+            button.setEnabled(enabled)
+        self.pushButton_7.setEnabled(True)
+
+    def lock_gui(self, method=False, boolen=False):
+        
+        if method:
+            dlg = QtWidgets.QDialog()
+            dlg.setWindowTitle("Password Required")
+            dlg.setFixedSize(300, 100)
+            layout = QtWidgets.QVBoxLayout()
+
+            password_input = QtWidgets.QLineEdit()
+            password_input.setEchoMode(QtWidgets.QLineEdit.Password)
+            password_input.setPlaceholderText("Enter password")
+
+            button = QtWidgets.QPushButton("Unlock")
+
+            def check_password():
+                if password_input.text() == "admin":
+                    dlg.accept()
+                else:
+                    QtWidgets.QMessageBox.warning(dlg, "Sai mật khẩu", "Mật khẩu không đúng!")
+
+            button.clicked.connect(check_password)
+
+            layout.addWidget(password_input)
+            layout.addWidget(button)
+            dlg.setLayout(layout)
+
+            if dlg.exec_() == QtWidgets.QDialog.Accepted:
+                self.set_ui_enabled(enabled=boolen)
+                return True
+            else:
+                return False
+        else:
+            self.set_ui_enabled(enabled=boolen)
+            return True
+
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate

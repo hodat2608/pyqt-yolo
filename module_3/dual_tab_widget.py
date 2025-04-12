@@ -9,7 +9,8 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from module_3.layout_configuration_options import Ui_MainWindow  as uicmain
+from module_3.layout_configuration_options_ver_2 import Ui_MainWindow  as uicmain
+# from module_3.layout_configuration_options import Ui_MainWindow  as uicmain
 from module_3.upload_progress_uic import Process_Model 
 import sys
 
@@ -130,19 +131,17 @@ class Ui_MainWindow(object):
             new_tab = QtWidgets.QMainWindow()
             ui_child = uicmain()
             ui_child.setupUi(new_tab)
-
             self.processor = Process_Model(ui_child)
             self.processor.assign_values(model_number, camera_name, self.i_code)
             self.ui_instances[(camera_name, model_number)] = ui_child
-            self.processor.load_parameter(camera_id, model_number,self.cursor,self.connect_db,self.tabWidget,self.ui_instances)
-            ui_child.pushButton.clicked.connect(lambda _, u=self.processor: u.browse_file())
-            ui_child.pushButton_2.clicked.connect(lambda _, u=self.processor: u.load_model())
-            ui_child.pushButton_6.clicked.connect(lambda _, u=self.processor: u.save_values_injection_safe(self.cursor, self.connect_db))
-            ui_child.pushButton_5.clicked.connect(lambda _, u=self.processor: u.event_clock(
-                1, 1, self.dict, self.tabWidget, self.ui_instances))
-            ui_child.pushButton_8.clicked.connect(lambda _, u=self.processor: u.print_table_data(self.ui_instances))
-            ui_child.pushButton_21.clicked.connect(lambda _, u=self.processor: u.browse_file_detect())
-            ui_child.pushButton_22.clicked.connect(lambda _, u=self.processor: u.detect_img())
+            self.processor.load_parameter_injection_safe(camera_id, model_number,self.cursor,self.connect_db,self.tabWidget,self.ui_instances)
+            ui_child.pushButton.clicked.connect(lambda _, unit=self.processor: unit.browse_file())
+            ui_child.pushButton_2.clicked.connect(lambda _, unit=self.processor: unit.load_model())
+            ui_child.pushButton_6.clicked.connect(lambda _, unit=self.processor: unit.save_values_injection_safe(self.cursor, self.connect_db))
+            ui_child.pushButton_21.clicked.connect(lambda _, unit=self.processor: unit.browse_file_detect())
+            ui_child.pushButton_22.clicked.connect(lambda _, unit=self.processor: unit.detect_img())
+            ui_child.pushButton_7.clicked.connect(lambda _, unit=ui_child: unit.toggle_lock())
+            ui_child.pushButton_5.clicked.connect(lambda _, unit=self.processor: unit.load_data_injection_safe())
             self.tabWidget_2.addTab(new_tab, f"Model {model_number}")
             self.product_code_forms.append(new_tab)
 
@@ -160,7 +159,6 @@ class Ui_MainWindow(object):
             camera_id, camera_name = record[0], record[1]
             tab = self._create_camera_tab()
             self.tabWidget.addTab(tab, f"Camera {camera_name}")
-
             self.tabWidget_2 = tab.findChild(QtWidgets.QTabWidget)
             models = self._get_models_for_camera(camera_id)
             self._create_model_tabs(models,camera_name,camera_id)
