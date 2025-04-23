@@ -131,7 +131,26 @@ class Connect2Mysql:
                         Confidence INT DEFAULT 0,
                         model_id INT,
                         FOREIGN KEY (model_id) REFERENCES NUMS_MODEL(id) ON DELETE CASCADE
-                    )"""
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS MODE_AUTO (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        mode_name VARCHAR(255) NOT NULL,
+                        camera_id INT NOT NULL,
+                        UNIQUE (mode_name, camera_id),
+                        FOREIGN KEY (camera_id) REFERENCES NUMS_CAMERA(id) ON DELETE CASCADE
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS MODE_AUTO_SIGNAL (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        signal_name VARCHAR(255) NOT NULL,
+                        variable_name VARCHAR(255),
+                        address VARCHAR(255),
+                        read_register VARCHAR(255),
+                        read_value VARCHAR(255),
+                        write_register VARCHAR(255),
+                        write_value VARCHAR(255),
+                        mode_id INT NOT NULL,
+                        FOREIGN KEY (mode_id) REFERENCES MODE_AUTO(id) ON DELETE CASCADE
+                    )""",
                 ]
                 
                 for table in tables:

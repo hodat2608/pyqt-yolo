@@ -15,7 +15,7 @@ from PyQt5.QtGui import QStandardItem
 from mysql.connector import Error
 import cv2, numpy as np
 from module_3.layout_configuration_options_ver_2 import COLUMN_MAPPING
-
+import time
 class CheckboxDelegate(QStyledItemDelegate):
     def paint(self, painter, option, index):
         value = index.data(Qt.CheckStateRole)
@@ -54,6 +54,9 @@ class Process_Model:
         self.uic = uic
         self.list_layer = []
         self.list_layer_save = []
+        self.keys_mapping = list(COLUMN_MAPPING.keys())
+        self.file_path_detect = None
+        self.model_loader = None
 
     def browse_file(self):
             options = QtWidgets.QFileDialog.Options()
@@ -93,19 +96,17 @@ class Process_Model:
         if not self.file_path_detect:
             QMessageBox.warning(None, "Cảnh báo", "Vui lòng chọn file trước.")
             return
-
+        t1 = time.time()
         size = self.uic.label_5.size()
-        width, height = size.width(), size.height()
-
+        width_widget, height_widget = size.width(), size.height()
         image = cv2.imread(self.file_path_detect) 
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
-
-        result = self.model_loader(image_rgb, size=640, conf=0.4)
-
-        result_image = np.squeeze(result.render())
-        result_image = cv2.resize(result_image, (width, height), interpolation=cv2.INTER_AREA)
-        result_image_rgb = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
-
+        result_image_rgb,flag = self.engine(image,width_widget,height_widget)
+        if flag:
+            cv2.putText(result_image_rgb, 'RESULT:OK',(10, 50),cv2.FONT_HERSHEY_COMPLEX,  0.5,(0,255,0),1)
+        else:
+            cv2.putText(result_image_rgb, 'RESULT:NG',(10, 50),cv2.FONT_HERSHEY_COMPLEX,  0.5,(0,0,255),1)
+        t2 = time.time()
+        cv2.putText(result_image_rgb, f"Time: {t2-t1:.3f} s", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         qimage = QtGui.QImage(result_image_rgb.data, result_image_rgb.shape[1], result_image_rgb.shape[0], result_image_rgb.strides[0], QtGui.QImage.Format_RGB888)
         pixmap = QtGui.QPixmap.fromImage(qimage)
         self.uic.label_5.setPixmap(pixmap)
@@ -113,7 +114,7 @@ class Process_Model:
     def save_parameter_before_load_weight(self):
         model = self.uic.model
         model_column = self.uic.model_column
-        label_col_index = model_column.index(list(COLUMN_MAPPING.keys())[0])
+        label_col_index = model_column.index(self.keys_mapping[0])
         for row in range(model.rowCount()): 
             label_item = model.item(row, label_col_index)
             if label_item is None:
@@ -128,33 +129,34 @@ class Process_Model:
                     else:
                         value = item.text()
                     row_data[model_column[col]] = value
-            row_data[list(COLUMN_MAPPING.keys())[0]] = label_text
+            row_data[self.keys_mapping[0]] = label_text
             self.list_layer.append(row_data)
 
     def load_model(self):
         if not self.file_path:
             QMessageBox.warning(None, "Cảnh báo", "Vui lòng chọn file trước.")
             return
-        self.model = torch.hub.load('./levu','custom', path=self.file_path, source='local',force_reload =False)
-        self.populateTable()
+        if self.file_path.endswith('.pt'):
+            self.model = torch.hub.load('./levu','custom', path=self.file_path, source='local',force_reload =False)
+            self.populateTable()
     
     def populateTable(self):
         self.uic.model.removeRows(0, self.uic.model.rowCount())
         for label in self.model.names:
             row_items = []
             checkbox_delegate = CheckboxDelegate(self.uic.tableView)
-            for col_name in [list(COLUMN_MAPPING.keys())[1], list(COLUMN_MAPPING.keys())[2], list(COLUMN_MAPPING.keys())[3]]:
+            for col_name in [self.keys_mapping[1], self.keys_mapping[2], self.keys_mapping[3]]:
                 col_index = self.uic.model_column.index(col_name)
                 self.uic.tableView.setItemDelegateForColumn(col_index, checkbox_delegate)
 
             for col in range(len(self.uic.model_column)): 
                 item = QStandardItem()
-                if col == self.uic.model_column.index(list(COLUMN_MAPPING.keys())[0]): 
+                if col == self.uic.model_column.index(self.keys_mapping[0]): 
                     item.setText(str(label))
                     item.setTextAlignment(Qt.AlignCenter)
-                elif col in [self.uic.model_column.index(list(COLUMN_MAPPING.keys())[1]),\
-                            self.uic.model_column.index(list(COLUMN_MAPPING.keys())[2]),\
-                            self.uic.model_column.index(list(COLUMN_MAPPING.keys())[3])]:
+                elif col in [self.uic.model_column.index(self.keys_mapping[1]),\
+                            self.uic.model_column.index(self.keys_mapping[2]),\
+                            self.uic.model_column.index(self.keys_mapping[3])]:
                     item.setCheckable(True)
                     item.setCheckState(Qt.Unchecked)
                 else:  
@@ -196,6 +198,16 @@ class Process_Model:
                 raise ValueError("Không tìm thấy model_id tương ứng.")
 
             model_id = result[0]
+            weight_path = self.uic.lineEdit.text().strip()
+            conf = self.uic.spinBox.value()
+            size = self.uic.comboBox_3.currentText()
+            
+            if weight_path and weight_path.endswith('.pt'):
+                cursor.execute("""
+                    INSERT IGNORE INTO WEIGHTS 
+                    (Weight_Path, Conf_Value, Size_Value, model_id)
+                    VALUES (%s, %s, %s, %s)
+                """, (weight_path, conf, size, model_id))
 
             cursor.execute(
                     f"DELETE FROM PARAMETERSET WHERE model_id = %s",
@@ -229,7 +241,7 @@ class Process_Model:
     def load_data_injection_safe(self):
         model = self.uic.model
         model_column = self.uic.model_column
-        label_col_index = model_column.index(list(COLUMN_MAPPING.keys())[0])
+        label_col_index = model_column.index(self.keys_mapping[0])
 
         for row in range(model.rowCount()):
             label_item = model.item(row, label_col_index)
@@ -237,14 +249,14 @@ class Process_Model:
                 continue
             label_text = label_item.text().strip()
             for param_dict in self.list_layer:
-                if param_dict[list(COLUMN_MAPPING.keys())[0]] == label_text:
+                if param_dict[self.keys_mapping[0]] == label_text:
                     for col, col_name in enumerate(model_column):
                         value = param_dict.get(col_name)
                         item = QStandardItem()
                         if col == label_col_index:
                             item.setText(label_text)
                             item.setTextAlignment(Qt.AlignCenter)
-                        elif col_name in [list(COLUMN_MAPPING.keys())[1], list(COLUMN_MAPPING.keys())[2], list(COLUMN_MAPPING.keys())[3]]:
+                        elif col_name in [self.keys_mapping[1], self.keys_mapping[2], self.keys_mapping[3]]:
                             item.setCheckable(True)
                             item.setCheckState(Qt.Checked if value else Qt.Unchecked)
                         else:
@@ -277,7 +289,7 @@ class Process_Model:
             QMessageBox.critical(None, "Lỗi", f"MySQL Error: {e}")
             return
 
-        if weight_path:
+        if weight_path and weight_path.endswith('.pt'):
             self.model_loader = torch.hub.load('./levu', 'custom', path=weight_path, source='local', force_reload=False)
 
         try:
@@ -298,7 +310,7 @@ class Process_Model:
                         if row_data[db_columns.index(list(COLUMN_MAPPING.values())[0])] == label_name:
                             row_items = []
                             checkbox_delegate = CheckboxDelegate(self.uic.tableView)
-                            for col_name in [list(COLUMN_MAPPING.keys())[1], list(COLUMN_MAPPING.keys())[2], list(COLUMN_MAPPING.keys())[3]]:
+                            for col_name in [self.keys_mapping[1], self.keys_mapping[2], self.keys_mapping[3]]:
                                 col_index = self.uic.model_column.index(col_name)
                                 self.uic.tableView.setItemDelegateForColumn(col_index, checkbox_delegate)
 
@@ -307,10 +319,10 @@ class Process_Model:
                                 db_value = row_data[db_columns.index(db_col)]
 
                                 item = QStandardItem()
-                                if ui_col == list(COLUMN_MAPPING.keys())[0]:
+                                if ui_col == self.keys_mapping[0]:
                                     item.setText(str(label_name))
                                     item.setTextAlignment(Qt.AlignCenter)
-                                elif ui_col in [list(COLUMN_MAPPING.keys())[1], list(COLUMN_MAPPING.keys())[2], list(COLUMN_MAPPING.keys())[3]]:
+                                elif ui_col in [self.keys_mapping[1], self.keys_mapping[2], self.keys_mapping[3]]:
                                     item.setCheckable(True)
                                     item.setCheckState(Qt.Checked if db_value else Qt.Unchecked)
                                 else:
@@ -329,3 +341,72 @@ class Process_Model:
             connect_db.connection.rollback()
             QMessageBox.critical(None, "Lỗi không xác định", str(e))
 
+    def engine(self,image,width_widget,height_widget):
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
+        result_model = self.model_loader(image_rgb, size=640, conf=0.4)
+        result = result_model.pandas().xyxy[0]
+        result = result[result.name.isin(self.model_loader.names)]
+        index_ng = []
+        flag = True
+        for idx, row in result.iterrows():
+            label_name = row.name
+            confidence = float(row.confidence)
+            xmin, ymin, xmax, ymax = float(row.xmin),float(row.ymin),float(row.xmax),float(row.ymax)
+            width = xmax - xmin
+            height = ymax - ymin
+            for i in range(self.uic.model.rowCount()):
+                label_item = self.uic.model.item(i, self.uic.model_column.index(self.keys_mapping[0]))
+                if label_item and label_item.text().strip() == label_name:  
+                    join_item = self.uic.model.item(i, self.uic.model_column.index(self.keys_mapping[1]))
+                    if join_item and join_item.checkState() == Qt.Checked:
+                        conf_item = int(self.uic.model.item(i,self.uic.model_column.index(self.keys_mapping[-1])).text())
+                        wmin = int(self.uic.model.item(i,self.uic.model_column.index(self.keys_mapping[5])).text())
+                        wmax = int(self.uic.model.item(i,self.uic.model_column.index(self.keys_mapping[6])).text())
+                        hmin = int(self.uic.model.item(i,self.uic.model_column.index(self.keys_mapping[7])).text())
+                        hmax = int(self.uic.model.item(i,self.uic.model_column.index(self.keys_mapping[8])).text())
+                        if (confidence < (conf_item/100) or 
+                            width < wmin or width > wmax or 
+                            height < hmin or height > hmax):
+                            result.drop(idx, inplace=True, axis=0)
+                            index_ng.append(idx)
+                    else:
+                        if label_item and label_item.text().strip() == label_name:  
+                            result.drop(idx, inplace=True, axis=0)
+                            index_ng.append(idx)
+        list_ok = list(result.name)
+        result_image = np.squeeze(result_model.render(index_ng))
+        result_image_rgb = cv2.resize(result_image, (width_widget, height_widget), interpolation=cv2.INTER_AREA)
+        for i in range(self.uic.model.rowCount()):
+            label_item = self.uic.model.item(i,self.uic.model_column.index(self.keys_mapping[0]))
+            join_item = self.uic.model.item(i,self.uic.model_column.index(self.keys_mapping[1]))
+            ok_item = self.uic.model.item(i,self.uic.model_column.index(self.keys_mapping[2]))
+            ng_item = self.uic.model.item(i,self.uic.model_column.index(self.keys_mapping[3]))
+            quantity_item = self.uic.model.item(i,self.uic.model_column.index(self.keys_mapping[4]))
+            if join_item and join_item.checkState() == Qt.Checked:
+                if ok_item and ok_item.checkState() == Qt.Checked:
+                    if list_ok.count(label_item.text().strip()) != int(quantity_item.text().strip()):
+                        flag = False
+                if ng_item and ng_item.checkState() == Qt.Checked:
+                    if label_item.text().strip() in list_ok:
+                        flag = False
+        
+        return result_image_rgb,flag
+    
+
+    def print_tb_signal(self):
+        self.uic.tabWidget.setCurrentIndex(0)
+        self.uic.tabWidget_2.setCurrentIndex(0)
+        self.uic.tabWidget_3.setCurrentIndex(0)
+        self.uic.tabWidget_4.setCurrentIndex(0)
+
+    def read_register_from_txt(self,filepath):
+        with open(filepath, 'r') as file:
+            line = file.readline().strip()
+            if '=' in line:
+                register, value = line.split('=')
+                register = register.strip()
+                value = int(value.strip())
+                return register, value
+            else:
+                raise ValueError("File format is invalid")  
+            

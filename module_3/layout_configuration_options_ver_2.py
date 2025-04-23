@@ -722,7 +722,6 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addWidget(self.tableView, 0, 1, 2, 1)
 
 
-
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1920, 21))

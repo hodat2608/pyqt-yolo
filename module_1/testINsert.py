@@ -1,5 +1,9 @@
 import mysql.connector
 from mysql.connector import Error
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from module_3.dual_tab_widget import intermediate_layer
 
 def create_database_and_tables(cursor):
     """Tạo cơ sở dữ liệu và các bảng"""
@@ -190,7 +194,26 @@ def main():
         result1 = cursor.fetchall()
         print(result1)
 
-if __name__ == "__main__":
-    main()
+def open_pyuic6(item_code,database,connection):
+        pyuic6_instance = intermediate_layer(item_code,database,connection)
+class link:
+    def __init__(self):
+        self.connection = mysql.connector.connect(
+                host='127.0.0.1',
+                user='root',
+                password='123456789',
+                port=3306,
+                database='NQTAMSATF'
+            )
+        self.database ='NQTAMSATF'
+        self.item_code = 'TAMSATF'
 
+from PyQt5 import QtWidgets
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    connect = link()
+    item_code = connect.item_code
+    database = connect.database
+    window = intermediate_layer(item_code, database, connect)
+    sys.exit(app.exec_())
 
