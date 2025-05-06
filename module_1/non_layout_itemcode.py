@@ -402,6 +402,10 @@ class QTableData:
 
 class Pyuic5():
     def __init__(self,ui_db):
+        import ctypes
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+        QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
         self.ui_db = ui_db
 
         self.MainWindow = QtWidgets.QMainWindow()

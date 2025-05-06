@@ -76,13 +76,17 @@ class Ui_MainWindow(object):
 class main_pyuic:
     
     def __init__(self):
+        import ctypes
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+        QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
         import sys
         app = QtWidgets.QApplication(sys.argv)
         app.setStyle('Fusion')
         MainWindow = QtWidgets.QMainWindow()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(MainWindow)
-        MainWindow.show()
+        MainWindow.showMaximized()
         self.ui.actiondevice_configuration_settings.triggered.connect(lambda: self.open_pyuic5())
         sys.exit(app.exec_())
 

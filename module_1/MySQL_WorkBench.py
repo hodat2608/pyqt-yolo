@@ -151,6 +151,13 @@ class Connect2Mysql:
                         mode_id INT NOT NULL,
                         FOREIGN KEY (mode_id) REFERENCES MODE_AUTO(id) ON DELETE CASCADE
                     )""",
+                    """CREATE TABLE IF NOT EXISTS SHOTXMODEL (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        shot INT NOT NULL,
+                        no_of_model INT NOT NULL,
+                        mode_id INT NOT NULL,
+                        FOREIGN KEY (mode_id) REFERENCES MODE_AUTO(id) ON DELETE CASCADE
+                    )""",
                 ]
                 
                 for table in tables:

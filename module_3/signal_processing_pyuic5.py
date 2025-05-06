@@ -3,6 +3,14 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QMessageBox)
 from PyQt5 import QtCore, QtGui, QtWidgets
 from mysql.connector import Error
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout,
+    QLabel, QSpinBox, QTableWidget,
+    QTableWidgetItem, QComboBox
+)
+
+
 class SignalTableHelper:
     def __init__(self, table_widget):
         self.table = table_widget
@@ -46,21 +54,42 @@ class DataProcessSignal:
         self.uic = uic
         self.signal_table = SignalTableHelper(self.uic.tableWidget)
 
-    def save_values_signal(self, cursor, connect_db, camera_id):
-        try:
-            cursor.execute("""
-                INSERT IGNORE INTO MODE_AUTO (mode_name, camera_id)
-                VALUES (%s, %s)
-            """, (self.uic.comboBox_mode_auto.currentText(), camera_id))
-
+    def save_mode_auto(self, cursor, connect_db, item_code_id):
+        camera_name = self.uic.comboBox_camera.currentText()
+        cursor.execute("""
+                    SELECT id FROM NUMS_CAMERA 
+                    WHERE item_code_id = %s AND nums_camera = %s
+                """, (item_code_id, camera_name))
+            
+        result_camera_id = cursor.fetchone() 
+        if (camera_id := result_camera_id[0] if result_camera_id else None):
+            mode_name = self.uic.comboBox_mode_auto.currentText()
             cursor.execute("""
                 SELECT id FROM MODE_AUTO 
                 WHERE mode_name = %s AND camera_id = %s
-            """, (self.uic.comboBox_mode_auto.currentText(), camera_id))
+            """, (mode_name, camera_id))
             result = cursor.fetchone()
+            if not result:
+                cursor.execute("""
+                    INSERT INTO MODE_AUTO (mode_name, camera_id)
+                    VALUES (%s, %s)
+                """, (mode_name, camera_id))
+                connect_db.connection.commit()
+                cursor.execute("""
+                    SELECT id FROM MODE_AUTO 
+                    WHERE mode_name = %s AND camera_id = %s
+                """, (mode_name, camera_id))
+                result = cursor.fetchone()
 
-            if result:
-                mode_auto_id = result[0]
+        return result[0] if result else None
+
+    def save_values_signal_to_db(self, cursor,connect_db,item_code_id):
+        mode_auto_id = None
+        if (mode_auto_id := self.save_mode_auto(cursor, connect_db, item_code_id)):
+            try:
+                cursor.execute("""
+                    DELETE FROM MODE_AUTO_SIGNAL WHERE mode_id = %s
+                """, (mode_auto_id,))
                 for signal_name in self.signal_table.rows.keys():
                     variable_name = self.signal_table.get_value(signal_name, 'variable')
                     address = self.signal_table.get_value(signal_name, 'address')
@@ -84,24 +113,25 @@ class DataProcessSignal:
                         write_value if write_value else None,
                         mode_auto_id
                     ))
-
                 connect_db.connection.commit()
-        except Error as e:
-            connect_db.connection.rollback()
-            QMessageBox.critical(None, "Lỗi", f"MySQL Error: {e}")
+                QMessageBox.information(None, "Thành công", "Lưu thành công mode auto!")
 
-        except Exception as e:
-            connect_db.connection.rollback()
-            QMessageBox.critical(None, "Lỗi không xác định", str(e))
+            except Error as e:
+                connect_db.connection.rollback()
+                QMessageBox.critical(None, "Lỗi", f"MySQL Error: {e}")
 
-    def load_values_from_db(self,cursor,camera_id):
+            except Exception as e:
+                connect_db.connection.rollback()
+                QMessageBox.critical(None, "Lỗi không xác định", str(e))
+
+    def load_values_signals_from_db(self,cursor,camera_id):
         mode_name = self.uic.comboBox_mode_auto.currentText()
         cursor.execute("""
             SELECT id FROM MODE_AUTO
             WHERE mode_name = %s AND camera_id = %s
         """, (mode_name, camera_id))
-        result = cursor.fetchone()
-        if result:
+
+        if result := cursor.fetchone():
             mode_auto_id = result[0]
             cursor.execute("""
                 SELECT signal_name, variable_name, address, read_register, 
@@ -116,5 +146,136 @@ class DataProcessSignal:
                     value = row[i + 1]
                     if value is not None:
                         self.signal_table.set_value(signal_name, column_name, value)
+        
+        return mode_auto_id if result else None
 
+    def get_table_params(self):
+        dict_params = {}
+        dict_params['ready']= {}
+        dict_params['ready']['read_register'] = self.signal_table.get_value('ready', 'read_register')
+        dict_params['ready']['read_value'] = self.signal_table.get_value('ready', 'read_value')
+        dict_params['ready']['write_register'] = self.signal_table.get_value('ready', 'write_register')
+        dict_params['ready']['write_value'] = self.signal_table.get_value('ready', 'write_value')
+        
+        dict_params['run'] = {}
+        dict_params['run']['read_register'] = self.signal_table.get_value('run', 'read_register')
+        dict_params['run']['read_value'] = self.signal_table.get_value('run', 'read_value')
+        dict_params['run']['write_register'] = self.signal_table.get_value('run', 'write_register')
+        dict_params['run']['write_value'] = self.signal_table.get_value('run', 'write_value')
+
+        dict_params['trigger'] = {}
+        dict_params['trigger']['read_register'] = self.signal_table.get_value('trigger', 'read_register')
+        dict_params['trigger']['read_value'] = self.signal_table.get_value('trigger', 'read_value')
+        dict_params['trigger']['write_register'] = self.signal_table.get_value('trigger', 'write_register')
+        dict_params['trigger']['write_value'] = self.signal_table.get_value('trigger', 'write_value')
+
+        dict_params['busy'] = {}
+        dict_params['busy']['read_register'] = self.signal_table.get_value('busy', 'read_register')
+        dict_params['busy']['read_value'] = self.signal_table.get_value('busy', 'read_value')
+        dict_params['busy']['write_register'] = self.signal_table.get_value('busy', 'write_register')
+        dict_params['busy']['write_value'] = self.signal_table.get_value('busy', 'write_value')
+
+        dict_params['gate'] = {}
+        dict_params['gate']['read_register'] = self.signal_table.get_value('gate', 'read_register')
+        dict_params['gate']['read_value'] = self.signal_table.get_value('gate', 'read_value')
+        dict_params['gate']['write_register'] = self.signal_table.get_value('gate', 'write_register')
+        dict_params['gate']['write_value'] = self.signal_table.get_value('gate', 'write_value')
+
+        dict_params['complete'] = {}
+        dict_params['complete']['read_register'] = self.signal_table.get_value('complete', 'read_register')
+        dict_params['complete']['read_value'] = self.signal_table.get_value('complete', 'read_value')
+        dict_params['complete']['write_register'] = self.signal_table.get_value('complete', 'write_register')
+        dict_params['complete']['write_value'] = self.signal_table.get_value('complete', 'write_value')
+        
+        dict_params['reset'] = {}
+        dict_params['reset']['read_register'] = self.signal_table.get_value('reset', 'read_register')
+        dict_params['reset']['read_value'] = self.signal_table.get_value('reset', 'read_value')
+        dict_params['reset']['write_register'] = self.signal_table.get_value('reset', 'write_register')
+        dict_params['reset']['write_value'] = self.signal_table.get_value('reset', 'write_value')
+
+        dict_params['reset_counter'] = {}
+        dict_params['reset_counter']['read_register'] = self.signal_table.get_value('reset_counter', 'read_register')
+        dict_params['reset_counter']['read_value'] = self.signal_table.get_value('reset_counter', 'read_value')
+        dict_params['reset_counter']['write_register'] = self.signal_table.get_value('reset_counter', 'write_register')
+        dict_params['reset_counter']['write_value'] = self.signal_table.get_value('reset_counter', 'write_value')
+
+        return dict_params
+    
+
+    def save_shotxmodel_to_db(self,cursor,connect_db,item_code_id):
+        mode_auto_id = None
+        if mode_auto_id := self.save_mode_auto(cursor, connect_db, item_code_id):
+            try: 
+                cursor.execute("""
+                    DELETE FROM SHOTXMODEL WHERE mode_id = %s
+                """, (mode_auto_id,))
+
+                row_count = self.uic.tableWidget_3.rowCount()
+                col_count = self.uic.tableWidget_3.columnCount()
+                list_insert = []
+
+                for row in range(row_count):
+                    row_data = {}
+                    for col in range(col_count):
+                        item = self.uic.tableWidget_3.item(row, col)
+                        if item is not None:
+                            row_data[col] = item.text()
+                        else:
+                            widget = self.uic.tableWidget_3.cellWidget(row, col)
+                            if isinstance(widget, QComboBox):
+                                row_data[col] = widget.currentText()
+                    if row_data:
+                        list_insert.append(row_data)
+                if list_insert:
+                    insert_query = """
+                        INSERT INTO SHOTXMODEL (shot, no_of_model, mode_id)
+                        VALUES (%s, %s, %s)
+                    """
+                    for row in list_insert:
+                        shot = int(row.get(0, 0)) 
+                        no_of_model = int(row.get(1, 0))  
+                        cursor.execute(insert_query, (shot, no_of_model, mode_auto_id))
+                    connect_db.connection.commit()
+                    QMessageBox.information(None, "Thành công", "Lưu thành công shot link model!")
+
+            except Error as e:
+                connect_db.connection.rollback()
+                QMessageBox.critical(None, "Lỗi", f"MySQL Error: {e}")
+
+            except Exception as e:
+                connect_db.connection.rollback()
+                QMessageBox.critical(None, "Lỗi không xác định", str(e))
+
+    def load_shotxmodel_from_db(self,cursor,mode_auto_id):
+        
+        query = """
+            SELECT shot,no_of_model
+            FROM SHOTXMODEL
+            WHERE mode_id = %s
+            ORDER BY shot ASC
+        """
+        cursor.execute(query, (mode_auto_id,))
+        results = cursor.fetchall()
+        self.uic.tableWidget_3.setRowCount(len(results))
+
+        for row_index, (shot, no_of_model) in enumerate(results):
+            shot_item = QTableWidgetItem(str(shot))
+            self.uic.tableWidget_3.setItem(row_index,0,shot_item)
+            combo = QComboBox()
+            combo.addItems([str(i + 1) for i in range(10)])
+            combo.setCurrentText(str(no_of_model))
+            self.uic.tableWidget_3.setCellWidget(row_index, 1, combo)
+
+    def dict_shotxmodel(self):
+        row_count = self.uic.tableWidget_3.rowCount()
+        row_data = {}
+        for row in range(row_count):
+            item = self.uic.tableWidget_3.item(row,0)
+            shot = item.text()
+            widget_model = self.uic.tableWidget_3.cellWidget(row, 1)
+            if isinstance(widget_model, QComboBox):
+                model = widget_model.currentText()
+            row_data[shot] = model
+
+        return row_count,row_data
     

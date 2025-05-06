@@ -64,13 +64,22 @@
             <property name="title">
              <string>Sequence Testing</string>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_6">
-             <item>
+            <layout class="QGridLayout" name="gridLayout_5">
+             <item row="3" column="1">
               <widget class="QPushButton" name="pushButton_19">
                <property name="text">
                 <string>RUN </string>
                </property>
               </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QGraphicsView" name="graphicsView"/>
+             </item>
+             <item row="2" column="1">
+              <widget class="QDial" name="dial"/>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLCDNumber" name="lcdNumber"/>
              </item>
             </layout>
            </widget>
@@ -93,7 +102,7 @@
         </widget>
        </item>
        <item row="1" column="2">
-        <widget class="QLineEdit" name="lineEdit">
+        <widget class="QLineEdit" name="lineEdit_ready_val">
          <property name="maximumSize">
           <size>
            <width>150</width>
@@ -109,21 +118,21 @@
         </widget>
        </item>
        <item row="3" column="1">
-        <widget class="QPushButton" name="pushButton_6">
+        <widget class="QPushButton" name="pushButton_trigger_set">
          <property name="text">
           <string>Set</string>
          </property>
         </widget>
        </item>
        <item row="1" column="4">
-        <widget class="QSpinBox" name="spinBox">
+        <widget class="QSpinBox" name="spinBox_ready_val">
          <property name="alignment">
           <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QPushButton" name="pushButton_4">
+        <widget class="QPushButton" name="pushButton_ready_set">
          <property name="text">
           <string>Set</string>
          </property>
@@ -162,7 +171,7 @@
         </widget>
        </item>
        <item row="7" column="3">
-        <widget class="QPushButton" name="pushButton_17">
+        <widget class="QPushButton" name="pushButton_write_resetcounter">
          <property name="text">
           <string>Set</string>
          </property>
@@ -216,7 +225,7 @@
         </widget>
        </item>
        <item row="4" column="2">
-        <widget class="QLineEdit" name="lineEdit_4">
+        <widget class="QLineEdit" name="lineEdit_busy_val">
          <property name="maximumSize">
           <size>
            <width>150</width>
@@ -251,7 +260,7 @@
         </widget>
        </item>
        <item row="3" column="2">
-        <widget class="QLineEdit" name="lineEdit_3">
+        <widget class="QLineEdit" name="lineEdit_trigger_val">
          <property name="maximumSize">
           <size>
            <width>150</width>
@@ -264,7 +273,7 @@
         </widget>
        </item>
        <item row="5" column="2">
-        <widget class="QLineEdit" name="lineEdit_5">
+        <widget class="QLineEdit" name="lineEdit_gate_val">
          <property name="maximumSize">
           <size>
            <width>150</width>
@@ -277,14 +286,14 @@
         </widget>
        </item>
        <item row="6" column="4">
-        <widget class="QSpinBox" name="spinBox_6">
+        <widget class="QSpinBox" name="spinBox_reset_val">
          <property name="alignment">
           <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
        <item row="4" column="4">
-        <widget class="QSpinBox" name="spinBox_4">
+        <widget class="QSpinBox" name="spinBox_busy_val">
          <property name="alignment">
           <set>Qt::AlignCenter</set>
          </property>
@@ -323,21 +332,21 @@
         </widget>
        </item>
        <item row="3" column="3">
-        <widget class="QPushButton" name="pushButton_13">
+        <widget class="QPushButton" name="pushButton_write_trigger">
          <property name="text">
           <string>Set</string>
          </property>
         </widget>
        </item>
        <item row="7" column="1">
-        <widget class="QPushButton" name="pushButton_10">
+        <widget class="QPushButton" name="pushButton_rese_counter_set">
          <property name="text">
           <string>Set</string>
          </property>
         </widget>
        </item>
        <item row="3" column="4">
-        <widget class="QSpinBox" name="spinBox_3">
+        <widget class="QSpinBox" name="spinBox_trigger_val">
          <property name="alignment">
           <set>Qt::AlignCenter</set>
          </property>
@@ -382,21 +391,21 @@
         </widget>
        </item>
        <item row="5" column="3">
-        <widget class="QPushButton" name="pushButton_15">
+        <widget class="QPushButton" name="pushButton_write_gate">
          <property name="text">
           <string>Set</string>
          </property>
         </widget>
        </item>
        <item row="2" column="3">
-        <widget class="QPushButton" name="pushButton_12">
+        <widget class="QPushButton" name="pushButton_write_run">
          <property name="text">
           <string>Set</string>
          </property>
         </widget>
        </item>
        <item row="6" column="3">
-        <widget class="QPushButton" name="pushButton_16">
+        <widget class="QPushButton" name="pushButton_write_reset">
          <property name="text">
           <string>Set</string>
          </property>
@@ -447,7 +456,7 @@
         </widget>
        </item>
        <item row="4" column="1">
-        <widget class="QPushButton" name="pushButton_7">
+        <widget class="QPushButton" name="pushButton_busy_set">
          <property name="text">
           <string>Set</string>
          </property>
@@ -476,7 +485,7 @@
         </widget>
        </item>
        <item row="7" column="2">
-        <widget class="QLineEdit" name="lineEdit_7">
+        <widget class="QLineEdit" name="lineEdit_reset_counter_val">
          <property name="maximumSize">
           <size>
            <width>150</width>
@@ -489,21 +498,21 @@
         </widget>
        </item>
        <item row="2" column="4">
-        <widget class="QSpinBox" name="spinBox_2">
+        <widget class="QSpinBox" name="spinBox_run_val">
          <property name="alignment">
           <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
        <item row="7" column="4">
-        <widget class="QSpinBox" name="spinBox_7">
+        <widget class="QSpinBox" name="spinBox_reset_counter_val">
          <property name="alignment">
           <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
        <item row="6" column="1">
-        <widget class="QPushButton" name="pushButton_9">
+        <widget class="QPushButton" name="pushButton_resset_set">
          <property name="text">
           <string>Set</string>
          </property>
@@ -532,14 +541,14 @@
         </widget>
        </item>
        <item row="1" column="3">
-        <widget class="QPushButton" name="pushButton_11">
+        <widget class="QPushButton" name="pushButton_write_ready">
          <property name="text">
           <string>Set</string>
          </property>
         </widget>
        </item>
        <item row="6" column="2">
-        <widget class="QLineEdit" name="lineEdit_6">
+        <widget class="QLineEdit" name="lineEdit_reset_val">
          <property name="maximumSize">
           <size>
            <width>150</width>
@@ -552,14 +561,14 @@
         </widget>
        </item>
        <item row="5" column="1">
-        <widget class="QPushButton" name="pushButton_8">
+        <widget class="QPushButton" name="pushButton_gate_set">
          <property name="text">
           <string>Set</string>
          </property>
         </widget>
        </item>
        <item row="2" column="2">
-        <widget class="QLineEdit" name="lineEdit_2">
+        <widget class="QLineEdit" name="lineEdit_run_val">
          <property name="maximumSize">
           <size>
            <width>150</width>
@@ -572,7 +581,7 @@
         </widget>
        </item>
        <item row="2" column="1">
-        <widget class="QPushButton" name="pushButton_5">
+        <widget class="QPushButton" name="pushButton_run_set">
          <property name="text">
           <string>Set</string>
          </property>
@@ -608,14 +617,14 @@
         </widget>
        </item>
        <item row="4" column="3">
-        <widget class="QPushButton" name="pushButton_14">
+        <widget class="QPushButton" name="pushButton_write_busy">
          <property name="text">
           <string>Set</string>
          </property>
         </widget>
        </item>
        <item row="5" column="4">
-        <widget class="QSpinBox" name="spinBox_5">
+        <widget class="QSpinBox" name="spinBox_gate_val">
          <property name="alignment">
           <set>Qt::AlignCenter</set>
          </property>
@@ -1326,7 +1335,7 @@
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>250</height>
+        <height>400</height>
        </size>
       </property>
       <property name="frameShape">
@@ -1335,6 +1344,28 @@
       <property name="frameShadow">
        <enum>QFrame::Raised</enum>
       </property>
+      <layout class="QFormLayout" name="formLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_22">
+         <property name="text">
+          <string>Nums of shot: </string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QSpinBox" name="spinBox">
+         <property name="maximumSize">
+          <size>
+           <width>200</width>
+           <height>16777215</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="2">
+        <widget class="QTableWidget" name="tableWidget_3"/>
+       </item>
+      </layout>
      </widget>
     </item>
     <item row="2" column="2" colspan="2">
@@ -1350,18 +1381,17 @@
     <item row="0" column="1">
      <widget class="QGroupBox" name="groupBox_n_camere">
       <property name="title">
-       <string>Link to Camera</string>
+       <string>Number of Camera/Models</string>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <widget class="QLabel" name="label_20">
-         <property name="text">
-          <string>--------------------------</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QLabel" name="label_2">
+         <property name="maximumSize">
+          <size>
+           <width>70</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>11</pointsize>
@@ -1371,7 +1401,7 @@
           <string>Camera:</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignCenter</set>
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -1390,22 +1420,6 @@
          </item>
         </widget>
        </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="0" column="2">
-     <widget class="QGroupBox" name="groupBox_n_models">
-      <property name="title">
-       <string>Link to Numbers of Models</string>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <item>
-        <widget class="QLabel" name="label_21">
-         <property name="text">
-          <string>--------------------------</string>
-         </property>
-        </widget>
-       </item>
        <item>
         <widget class="QLabel" name="label_3">
          <property name="font">
@@ -1414,10 +1428,10 @@
           </font>
          </property>
          <property name="text">
-          <string>Nums of Models:</string>
+          <string> Models:</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignCenter</set>
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -1439,6 +1453,117 @@
       </layout>
      </widget>
     </item>
+    <item row="0" column="2">
+     <widget class="QGroupBox" name="groupBox_plc">
+      <property name="title">
+       <string>Select Device PLC</string>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QLabel" name="label_20">
+         <property name="maximumSize">
+          <size>
+           <width>90</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Device:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="comboBox_devc_plc">
+         <property name="maximumSize">
+          <size>
+           <width>150</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+         <item>
+          <property name="text">
+           <string>Keyence </string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Omron</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Mitsubishi</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_21">
+         <property name="maximumSize">
+          <size>
+           <width>70</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Protocol:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="comboBox_protocol">
+         <property name="maximumSize">
+          <size>
+           <width>200</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+         <item>
+          <property name="text">
+           <string>KV COM Protocol/TCP/IP socket</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>FINS Ethernet/IP/pyfins</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>MC Protocol/pymcprotocol</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -1447,7 +1572,7 @@
      <x>0</x>
      <y>0</y>
      <width>1800</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

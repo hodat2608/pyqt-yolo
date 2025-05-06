@@ -8,12 +8,12 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEd
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt
-from module_3.layout_configuration_options import Ui_MainWindow
 from PyQt5.QtWidgets import QStyledItemDelegate, QStyleOptionButton, QStyle
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QStandardItem
 from mysql.connector import Error
 import cv2, numpy as np
+from pathlib import Path
 from module_3.layout_configuration_options_ver_2 import COLUMN_MAPPING
 import time
 class CheckboxDelegate(QStyledItemDelegate):
@@ -57,6 +57,7 @@ class Process_Model:
         self.keys_mapping = list(COLUMN_MAPPING.keys())
         self.file_path_detect = None
         self.model_loader = None
+        self.path_object = None
 
     def browse_file(self):
             options = QtWidgets.QFileDialog.Options()
@@ -137,12 +138,12 @@ class Process_Model:
             QMessageBox.warning(None, "Cảnh báo", "Vui lòng chọn file trước.")
             return
         if self.file_path.endswith('.pt'):
-            self.model = torch.hub.load('./levu','custom', path=self.file_path, source='local',force_reload =False)
+            self.model = torch.hub.load('./yolov5','custom', path=self.file_path, source='local',force_reload =False)
             self.populateTable()
     
     def populateTable(self):
         self.uic.model.removeRows(0, self.uic.model.rowCount())
-        for label in self.model.names:
+        for label in self.model.names.values():
             row_items = []
             checkbox_delegate = CheckboxDelegate(self.uic.tableView)
             for col_name in [self.keys_mapping[1], self.keys_mapping[2], self.keys_mapping[3]]:
@@ -290,7 +291,8 @@ class Process_Model:
             return
 
         if weight_path and weight_path.endswith('.pt'):
-            self.model_loader = torch.hub.load('./levu', 'custom', path=weight_path, source='local', force_reload=False)
+            self.path_object = Path(weight_path).parent
+            self.model_loader = torch.hub.load('./yolov5', 'custom', path=weight_path, source='local', force_reload=False)
 
         try:
             reverse_column_map = {v: k for k, v in COLUMN_MAPPING.items()}
@@ -305,9 +307,9 @@ class Process_Model:
             result = cursor.fetchall()
             if result:
                 self.uic.model.removeRows(0, self.uic.model.rowCount())
-                for label_name in self.model_loader.names:
+                for label_name in self.model_loader.names.values():
                     for row_data in result:
-                        if row_data[db_columns.index(list(COLUMN_MAPPING.values())[0])] == label_name:
+                        if str(row_data[db_columns.index(list(COLUMN_MAPPING.values())[0])]) == str(label_name):
                             row_items = []
                             checkbox_delegate = CheckboxDelegate(self.uic.tableView)
                             for col_name in [self.keys_mapping[1], self.keys_mapping[2], self.keys_mapping[3]]:
