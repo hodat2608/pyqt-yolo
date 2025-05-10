@@ -96,7 +96,9 @@ class CameraManager:
         except Exception as e:
             print(f"[!] Trigger read error: {e}")
         
-
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
+import queue
 class Ui_MainWindow(object):
 
     def __init__(self,i_code,db,connect_db): 
@@ -105,12 +107,15 @@ class Ui_MainWindow(object):
         self.db = db
         self.connect_db = connect_db
         self.cursor = self.connect_db.connection.cursor()
-        # self.camera_manager = CameraManager()
         self.trigger_timer = QTimer()
-        self.trigger_timer.setInterval(200)
+        self.trigger_timer.setInterval(10)
         self.built_in_object = {}
         self.trigger_file_path = r"C:\gui_part\module_3\trigger.txt"
-        self.counter = 0
+        self.executor = ThreadPoolExecutor(max_workers=4)
+        self.counters = defaultdict(int)  # Mỗi camera có 1 counter riêng
+        self.task = queue.Queue()
+        self.task_timer = QtCore.QTimer()
+        self.task_timer.setInterval(10)
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -167,7 +172,9 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         self.update_database()
         self.trigger_timer.timeout.connect(self.check_trigger_once)
-        self.trigger_timer.start(50)
+        self.trigger_timer.start(10)
+        self.task_timer.timeout.connect(self.task_ivy)
+        self.task_timer.start(10)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -211,17 +218,18 @@ class Ui_MainWindow(object):
         layout.addWidget(inner_tab)
         return tab
 
-    def _set_dict(self,camera,ui_child,model_loader,path_instanses,_dict_signals,_shot_complete,_dict_shot):
+    def _set_dict(self,camera,ui_child,model_loader,path_instanses,_dict_signals,_shot_complete,_dict_shot,parameter_models):
         self.built_in_object[f'built-in-camera-{camera}']['pyuic'] = ui_child
         self.built_in_object[f'built-in-camera-{camera}']['model_loader'] = model_loader
         self.built_in_object[f'built-in-camera-{camera}']['path_instances'] = path_instanses
         self.built_in_object[f'built-in-camera-{camera}']['signals'] = _dict_signals
         self.built_in_object[f'built-in-camera-{camera}']['shot'] = _dict_shot
         self.built_in_object[f'built-in-camera-{camera}']['shot_complete'] = _shot_complete
+        self.built_in_object[f'built-in-camera-{camera}']['parameter_models_x'] = parameter_models
 
    
     def _create_model_tabs(self,models,camera_name,camera_id):
-        ui_instances,ui_modelloader,path_instanses= {},{},{}
+        ui_instances,ui_modelloader,path_instanses,parameter_models= {},{},{},{}
         for model_index, _ in enumerate(models):
             model_number = model_index + 1
             new_tab = QtWidgets.QMainWindow()
@@ -233,6 +241,7 @@ class Ui_MainWindow(object):
             ui_instances[(f'camera-{camera_name}', f'model-{model_number}')] = self.ui_child
             ui_modelloader[(f'camera-{camera_name}',f'model-{model_number}')] = self.processor.model_loader
             path_instanses[(f'camera-{camera_name}',f'model-{model_number}')] = self.processor.path_object
+            parameter_models[(f'camera-{camera_name}',f'model-{model_number}')] = self.processor.parametes_model
             self.ui_child.pushButton.clicked.connect(lambda _,unit=self.processor:unit.browse_file())
             self.ui_child.pushButton_2.clicked.connect(lambda _,unit=self.processor:unit.load_model())
             self.ui_child.pushButton_6.clicked.connect(lambda _,unit=self.processor:unit.save_values_injection_safe(self.cursor, self.connect_db))
@@ -243,7 +252,7 @@ class Ui_MainWindow(object):
             self.tabWidget_2.addTab(new_tab, f"Model {model_number}")
             self.product_code_forms.append(new_tab)
 
-        return ui_instances,ui_modelloader,path_instanses
+        return ui_instances,ui_modelloader,path_instanses,parameter_models
         
     def update_database(self):
         self.tabWidget_2.clear()
@@ -262,7 +271,7 @@ class Ui_MainWindow(object):
             models = self._get_models_for_camera(camera_id)
             if camera_name not in self.built_in_object:
                 self.built_in_object[f'built-in-camera-{camera_name}'] = {}
-            ui_instances,ui_modelloader,path_instanses = self._create_model_tabs(models,camera_name,camera_id)
+            ui_instances,ui_modelloader,path_instanses,parameter_models = self._create_model_tabs(models,camera_name,camera_id)
             AutomationInterface_t = QtWidgets.QMainWindow()
             self.Automation = AutomationInterface()
             _translate = QtCore.QCoreApplication.translate
@@ -279,7 +288,7 @@ class Ui_MainWindow(object):
             self.Automation.pushButton_apply_signal.clicked.connect(lambda _,unit=self.DataProcessSignal:unit.save_values_signal_to_db(self.cursor,self.connect_db,item_code_id))
             self.product_code_forms.append(AutomationInterface_t)
             _dict_signals = self.DataProcessSignal.get_table_params()
-            self._set_dict(camera_name,ui_instances,ui_modelloader,path_instanses,_dict_signals,_shot_complete,_dict_shot)
+            self._set_dict(camera_name,ui_instances,ui_modelloader,path_instanses,_dict_signals,_shot_complete,_dict_shot,parameter_models)
             self.Automation.pushButton_modify.clicked.connect(lambda _,unit=self.DataProcessSignal:unit.save_shotxmodel_to_db(self.cursor,self.connect_db,item_code_id))
 
     def read_plc(self,register_trigger):
@@ -288,11 +297,9 @@ class Ui_MainWindow(object):
                 line = file.readline().strip()
                 if '=' not in line:
                     return 0
-
                 register, value = line.split('=')
                 register = register.strip()
                 value = int(value.strip())
-
                 if register == register_trigger: 
                     return value
                 else: 
@@ -315,8 +322,142 @@ class Ui_MainWindow(object):
             print(f"Error writing to trigger file: {e}")
             return False
         return True
-
+    
     def check_trigger_once(self):
+        if not self.built_in_object:
+            return
+
+        for key, values in self.built_in_object.items():
+            signals = values['signals']['trigger']
+            trigger = signals['read_register']
+            trigger_read_value = signals['read_value']
+
+            try:
+                if int(self.read_plc(trigger)) == int(trigger_read_value):
+                    self.write_plc(trigger, 0)  
+                    self.task.put((key, values))
+            except Exception as e:
+                print(f"[{key}] Error while reading trigger: {e}")
+
+    def task_ivy(self):
+        if not self.task.empty():
+            try:
+                key, values = self.task.get_nowait()
+                self.executor.submit(self.handle_triggered_camera, key, values)
+            except queue.Empty:
+                pass
+
+    def handle_triggered_camera(self, key, values):
+        self.counters[key] += 1
+        current_count = self.counters[key]
+        print(f"[{key}] Counter = {current_count}")
+
+        t1 = time.time()
+        num_model = values['shot'].get(str(current_count))
+        if not num_model:
+            print(f"[{key}] No model found for counter {current_count}")
+            return
+
+        model_loader_dict = values['model_loader']
+        pyuic_dict = values['pyuic']
+        path_instances_dict = values['path_instances']
+        parameter_model = values['parameter_models_x']
+
+        for (shot, model_full), pyuic5 in pyuic_dict.items():
+            model_base = model_full.split('-')[0]
+            key_model = (shot, f'{model_base}-{num_model}')
+
+            model_loader = model_loader_dict.get(key_model)
+            path_folder = str(path_instances_dict.get(key_model, ''))
+            pyuic5 = pyuic_dict.get(key_model)
+            list_params = parameter_model.get(key_model)
+           
+            image_list = glob.glob(f"{path_folder}/*.jpg")
+            if not image_list:
+                print(f"[{key}] No image found at {path_folder}")
+                continue
+
+            image_path = image_list[0]
+            image_rgb = cv2.imread(image_path)
+            if image_rgb is None:
+                print(f"[{key}] Failed to read image: {image_path}")
+                continue
+
+            result_image_rgb, flag = self.engine_outdoor(image_rgb, model_loader, 450, 450)
+
+            elapsed = time.time() - t1
+            result_text = f'RESULT: {"OK" if flag else "NG"} {elapsed:.2f}'
+            color = (0, 255, 0) if flag else (0, 0, 255)
+
+            cv2.putText(result_image_rgb, result_text, (10, 50),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+
+            h, w = result_image_rgb.shape[:2]
+            qimage = QtGui.QImage(result_image_rgb.data, w, h, result_image_rgb.strides[0], QtGui.QImage.Format_RGB888)
+            pixmap = QtGui.QPixmap.fromImage(qimage)
+            QtCore.QMetaObject.invokeMethod(pyuic5.label_5, "setPixmap", QtCore.Qt.QueuedConnection,
+                                            QtCore.Q_ARG(QtGui.QPixmap, pixmap))
+            os.remove(image_path)
+
+        if current_count == values.get('shot_complete', 0):
+            self.counters[key] = 0
+
+    def check_trigger_sencond(self):
+        if self.built_in_object:
+            for key, values in self.built_in_object.items():
+                signals = values['signals']['trigger']
+                trigger = signals['read_register']
+                trigger_read_value = signals['read_value']
+
+                if int(self.read_plc(trigger)) == int(trigger_read_value):
+                    self.counter += 1
+                    print('self.counter:', self.counter)
+
+                    t1 = time.time()
+                    self.write_plc(trigger, 0)
+
+                    num_model = values['shot'].get(str(self.counter))
+                    if not num_model:
+                        continue
+
+                    model_loader_dict = values['model_loader']
+                    pyuic_dict = values['pyuic']
+                    path_instances_dict = values['path_instances']
+
+                    for (shot, model_full), pyuic5 in pyuic_dict.items():
+                        model_base = model_full.split('-')[0]
+                        key_model = (shot, f'{model_base}-{num_model}')
+                        model_loader = model_loader_dict.get(key_model)
+                        path_folder = str(path_instances_dict.get(key_model, ''))
+                        pyuic5 = pyuic_dict.get(key_model)
+                        image_list = glob.glob(f"{path_folder}/*.jpg")
+                        
+                        if image_list:
+                            image_path = image_list[0]
+                            image_rgb = cv2.imread(image_path)
+                            result_image_rgb, flag = self.engine_outdoor(image_rgb, model_loader, 450, 450)
+                            
+                            elapsed = time.time() - t1
+                            text = f'RESULT: {"OK" if flag else "NG"} {elapsed:.2f}'
+                            color = (0, 255, 0) if flag else (0, 0, 255)
+
+                            cv2.putText(result_image_rgb, text, (10, 50),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+
+                            h, w = result_image_rgb.shape[:2]
+                            qimage = QtGui.QImage(result_image_rgb.data, w, h, result_image_rgb.strides[0],
+                                                QtGui.QImage.Format_RGB888)
+                            pixmap = QtGui.QPixmap.fromImage(qimage)
+                            pyuic5.label_5.setPixmap(pixmap)
+
+                            os.remove(image_path)
+                        else:
+                            print("No images found in the specified path.")
+
+                    if self.counter == values['shot_complete']:
+                        self.counter = 0
+
+    def check_trigger_third(self):
         if True:
             if self.built_in_object != {}:
                 for key,values in self.built_in_object.items():
@@ -327,7 +468,6 @@ class Ui_MainWindow(object):
                         print('self.counter: ', self.counter )
                         t1 = time.time()
                         self.write_plc(trigger,0)
-                        print('model:',values['shot'][str(self.counter)])
                         num_model = values['shot'][str(self.counter)]
                         for k,v in values['pyuic'].items():
                             shot = k[0]

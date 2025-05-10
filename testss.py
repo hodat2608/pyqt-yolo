@@ -1,4 +1,4 @@
-t = {'built-in-camera-1': {'pyuic': {('camera-1', 'model-1'):'pyuic5'}, 'model_loader': {('camera-1', 'model-1'): 'model 1' },
+dictionary = {'built-in-camera-1': {'pyuic': {('camera-1', 'model-1'):'pyuic5',('camera-1', 'model-2'):'pyuic6'}, 'model_loader': {('camera-1', 'model-1'): 'model 1' },
                         'signals': {'ready': {'read_register': '2000', 'read_value': '', 'write_register': '1000', 'write_value': '1'}, 
                                     'run': {'read_register': '', 'read_value': '', 'write_register': '1002', 'write_value': '1'}, 
                                     'trigger': {'read_register': '2004', 'read_value': '1', 'write_register': '', 'write_value': ''}, 
@@ -8,19 +8,21 @@ t = {'built-in-camera-1': {'pyuic': {('camera-1', 'model-1'):'pyuic5'}, 'model_l
                                     'run': {'read_register': '', 'read_value': '', 'write_register': '1002', 'write_value': '1'}, 
                                     'trigger': {'read_register': '1004', 'read_value': '1', 'write_register': '', 'write_value': ''}, 
                                     'busy': {'read_register': '', 'read_value': '', 'write_register': '1006', 'write_value': '1'}}}}
+# first_key = list(dictionary.keys())[1]
+# print(dictionary[first_key])
 
-test = '2004'
-num_model = 2
-for key,val in t.items():
-    trigger = val['signals']['trigger']['read_register']
-    if test in trigger:
-        for k,v in val['pyuic'].items():
-            shot = k[0]
-            model = k[1].split('-')[0]
-            num_model = k[1].split('-')[1]
-            total = (shot,f'{model}-{num_model}')
-            print(total)
+
+
+# test = '2004'
+# num_model = 2
+# for key,val in t.items():
+#     trigger = val['signals']['trigger']['read_register']
+#     if test in trigger:
+#         for (shot, model_full), pyuic5 in val['pyuic'].items():
+            
+#             print(shot, 'avc  ',model_full)
             # print(k[1].split('-')[0])
+
 
 # from PyQt5.QtWidgets import (
 #     QApplication, QWidget, QVBoxLayout, QHBoxLayout,

@@ -1,6 +1,6 @@
-import torch
-model = torch.hub.load('./yolov5','custom', path=r"C:\gui_part\models_pt\cam1\model1\NQDVNHT_M100_CAMERA_1_2025-02-05.pt", source='local',force_reload =False)
-
-label = model.names
-for label in label.values():
-    print(label)
+list = [{'Label Name': 'mat1', 'Join': '125335', 'OK': False, 'NG': False, 'Quantity': '0', 'Width Min': '0', 'Width Max': '0', 'Height Min': '0', 'Height Max': '0', 'Assign Value': '0', 'Confidence': '0'}, {'Label Name': 'mat2', 'Join': True, 'OK': False, 'NG': False, 'Quantity': '0', 'Width Min': '0', 'Width Max': '0', 'Height Min': '0', 'Height Max': '0', 'Assign Value': '0', 'Confidence': '0'}, {'Label Name': 'mat3', 'Join': True, 'OK': False, 'NG': False, 'Quantity': '0', 'Width Min': '0', 'Width Max': '0', 'Height Min': '0', 'Height Max': '0', 'Assign Value': '0', 'Confidence': '0'}, {'Label Name': 'mat4', 'Join': True, 'OK': False, 'NG': False, 'Quantity': '0', 'Width Min': '0', 'Width Max': '0', 'Height Min': '0', 'Height Max': '0', 'Assign Value': '0', 'Confidence': '0'}, {'Label Name': 'tu_dien', 'Join': True, 'OK': False, 'NG': False, 'Quantity': '0', 'Width Min': '0', 'Width Max': '0', 'Height Min': '0', 'Height Max': '0', 'Assign Value': '0', 'Confidence': '0'}, {'Label Name': 'mat5', 'Join': True, 'OK': False, 'NG': False, 'Quantity': '0', 'Width Min': '0', 'Width Max': '0', 'Height Min': '0', 'Height Max': '0', 'Assign Value': '0', 'Confidence': '0'}, {'Label Name': 'mat6', 'Join': True, 'OK': False, 'NG': False, 'Quantity': '0', 'Width Min': '0', 'Width Max': '0', 'Height Min': '0', 'Height Max': '0', 'Assign Value': '0', 'Confidence': '0'}, {'Label Name': 'chau_dien', 'Join': True, 'OK': False, 'NG': False, 'Quantity': '0', 'Width Min': '0', 'Width Max': '0', 'Height Min': '0', 'Height Max': '0', 'Assign Value': '0', 'Confidence': '0'}, {'Label Name': 'keo_dinh_chau', 'Join': True, 'OK': False, 'NG': False, 'Quantity': '0', 'Width Min': '0', 'Width Max': '0', 'Height Min': '0', 'Height Max': '0', 'Assign Value': '0', 'Confidence': '0'}, {'Label Name': 'di_vat', 'Join': True, 'OK': False, 'NG': False, 'Quantity': '0', 'Width Min': '0', 'Width Max': '0', 'Height Min': '0', 'Height Max': '0', 'Assign Value': '0', 'Confidence': '0'}, {'Label Name': 'dithuong', 'Join': True, 'OK': False, 'NG': False, 'Quantity': '0', 'Width Min': '0', 'Width Max': '0', 'Height Min': '0', 'Height Max': '0', 'Assign Value': '0', 'Confidence': '0'}]
+label_name = 'mat1'
+for i in list:
+    if i['Label Name'] == label_name:
+        print(i['Join'])
+        break

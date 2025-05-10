@@ -133,6 +133,8 @@ class Process_Model:
             row_data[self.keys_mapping[0]] = label_text
             self.list_layer.append(row_data)
 
+        return self.list_layer
+
     def load_model(self):
         if not self.file_path:
             QMessageBox.warning(None, "Cảnh báo", "Vui lòng chọn file trước.")
@@ -202,7 +204,12 @@ class Process_Model:
             weight_path = self.uic.lineEdit.text().strip()
             conf = self.uic.spinBox.value()
             size = self.uic.comboBox_3.currentText()
-            
+
+            cursor.execute(
+                    f"DELETE FROM WEIGHTS WHERE model_id = %s",
+                    (model_id,),
+                )
+   
             if weight_path and weight_path.endswith('.pt'):
                 cursor.execute("""
                     INSERT IGNORE INTO WEIGHTS 
@@ -278,9 +285,10 @@ class Process_Model:
                 FROM WEIGHTS
                 WHERE model_id = (SELECT id FROM NUMS_MODEL WHERE camera_id = %s AND nums_model = %s)
             """, (camera_id, model))
-            result = cursor.fetchone()
+            result = cursor.fetchall()
+
             if result:
-                weight_path, conf_value, size_value = result
+                weight_path, conf_value, size_value = result[0]
                 self.uic.lineEdit.setText(weight_path)
                 self.uic.spinBox.setValue(conf_value)
                 self.uic.comboBox_3.setCurrentText(str(size_value))
@@ -298,7 +306,6 @@ class Process_Model:
             reverse_column_map = {v: k for k, v in COLUMN_MAPPING.items()}
 
             db_columns = list(COLUMN_MAPPING.values())
-
             cursor.execute(f"""
                 SELECT {', '.join(db_columns)}
                 FROM PARAMETERSET
@@ -334,7 +341,7 @@ class Process_Model:
                                 row_items.append(item)
 
                             self.uic.model.appendRow(row_items)
-            self.save_parameter_before_load_weight()
+            self.parametes_model = self.save_parameter_before_load_weight()
         except Error as e:
             connect_db.connection.rollback()
             QMessageBox.critical(None, "Lỗi", f"MySQL Error: {e}")
