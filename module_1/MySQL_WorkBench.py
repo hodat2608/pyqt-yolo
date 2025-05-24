@@ -7,7 +7,14 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEd
                              QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView,
                              QGroupBox)
 import logging
-
+import socket
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEdit, 
+                             QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, 
+                             QFrame, QComboBox, QScrollArea, QMessageBox, QSpinBox,
+                             QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView,
+                             QGroupBox)
+from PyQt5.QtCore import Qt, QSize
+from PyQt5 import QtCore, QtGui, QtWidgets
 class Connect2Mysql:
 
     def __init__(self,ui_connection_sql,ui_mainwindow,uicmin):
@@ -81,13 +88,23 @@ class Connect2Mysql:
         )
         if reply == QMessageBox.Yes:
             try:
-                self.cursor = self.connection.cursor()
+                try:
+                    self.cursor = self.connection.cursor()
+                except mysql.connector.Error as error:
+                    QMessageBox.critical(None, "Error", f"Bạn chưa kết nối đến MySQL Workbench: {str(error)}")
+                    return
+                
                 self.cursor.execute(f"CREATE DATABASE IF NOT EXISTS {self.uicmin.lineEdit_name_devic.text()}")
                 self.cursor.execute(f"USE {self.uicmin.lineEdit_name_devic.text()}")
                 tables = [
                     """CREATE TABLE IF NOT EXISTS ITEMS_CODE (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         name_line_code VARCHAR(255) NOT NULL UNIQUE
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS TCP_IP (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        ip_address_plc VARCHAR(255),
+                        port_plc INT
                     )""",
                     """CREATE TABLE IF NOT EXISTS NUMS_CAMERA (
                         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -110,9 +127,10 @@ class Connect2Mysql:
                     """CREATE TABLE IF NOT EXISTS WEIGHTS (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         Weight_Path TEXT NOT NULL,
-                        Weight_Used_Path TEXT NOT NULL,
+                        Activity_History_Path TEXT NOT NULL,
                         Conf_Value INT DEFAULT 0,
                         Size_Value INT DEFAULT 0,
+                        Device VARCHAR(255),
                         model_id INT,
                         FOREIGN KEY (model_id) REFERENCES NUMS_MODEL(id) ON DELETE CASCADE
                     )""",
@@ -142,12 +160,13 @@ class Connect2Mysql:
                     """CREATE TABLE IF NOT EXISTS MODE_AUTO_SIGNAL (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         signal_name VARCHAR(255) NOT NULL,
-                        variable_name VARCHAR(255),
                         address VARCHAR(255),
                         read_register VARCHAR(255),
-                        read_value VARCHAR(255),
+                        read_value_on VARCHAR(255),
+                        read_value_off VARCHAR(255),
                         write_register VARCHAR(255),
-                        write_value VARCHAR(255),
+                        write_value_on VARCHAR(255),
+                        write_value_off VARCHAR(255),
                         mode_id INT NOT NULL,
                         FOREIGN KEY (mode_id) REFERENCES MODE_AUTO(id) ON DELETE CASCADE
                     )""",
@@ -224,6 +243,52 @@ class Connect2Mysql:
         except Error as e:
             self.connection.rollback()
             return False
+        
+    def save_ip_address(self):
+        try: 
+            self.cursor.execute("""
+                INSERT IGNORE INTO TCP_IP (
+                    ip_address_plc, port_plc
+                ) VALUES (%s, %s)
+            """, (
+            self.ip,
+            self.port,
+            ))
+            self.uicmin.label_test_ip_connection.setText(self._translate("MainWindow", "Save Ip Success"))
+        except Error as e:
+            self.connection.rollback()
+            self.uicmin.label_test_ip_connection.setText(self._translate("MainWindow", "Save Ip Failed"))
+            return False
+
+
+    def TCP_IP_PORT2PLC(self):
+        self._translate = QtCore.QCoreApplication.translate
+        ip = self.uicmin.lineEdit.text()
+        port = self.uicmin.lineEdit_2.text()
+        self.ip = ip
+        self.port = port
+        if self.ping_ip(ip,port,timeout=3):
+            self.uicmin.label_test_ip_connection.setText(self._translate("MainWindow", "Ping IP Succesed"))
+            self.uicmin.pushButton_8.setEnabled(True)
+        else: 
+            self.uicmin.label_test_ip_connection.setText(self._translate("MainWindow", "Ping IP Failed"))
+            self.uicmin.pushButton_8.setEnabled(False)
+
+    def ping_ip(self,ip,port,timeout=3):
+        try: 
+            with socket.create_connection((ip,port), timeout=timeout):
+                return True
+        except (socket.timeout, socket.error):
+            return False
+        
+    def ip_config(self):
+        locals_ip = self.get_ipv4_address()
+        self.uicmin.lineEdit_3.setText(self._translate("MainWindow", locals_ip))
+        
+    def get_ipv4_address(self):
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        return local_ip
 
     def commitment(self):
         try:

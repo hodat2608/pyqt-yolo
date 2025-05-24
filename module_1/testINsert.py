@@ -3,7 +3,7 @@ from mysql.connector import Error
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from module_3.dual_tab_widget import intermediate_layer
+from module_3.main_thread import intermediate_layer
 
 def create_database_and_tables(cursor):
     """Tạo cơ sở dữ liệu và các bảng"""

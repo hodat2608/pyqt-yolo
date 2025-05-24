@@ -16,7 +16,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEd
                              QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView,
                              QGroupBox)
 from PyQt5 import QtCore, QtGui, QtWidgets
-from module_1.non_layout_itemcode import Pyuic5
+# from module_1.non_layout_itemcode import Pyuic5
+from module_1.database_management_control import Pyuic5
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):

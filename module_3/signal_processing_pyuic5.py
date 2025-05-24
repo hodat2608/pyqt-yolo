@@ -25,12 +25,13 @@ class SignalTableHelper:
             'reset_counter': 7
         }
         self.columns = {
-            'variable': 0,
-            'address': 1,
-            'read_register': 2,
-            'read_value': 3,
+            'address': 0,
+            'read_register': 1,
+            'read_value_on': 2,
+            'read_value_off': 3,
             'write_register': 4,
-            'write_value': 5
+            'write_value_on': 5,
+            'write_value_off': 6
         }
 
     def get_value(self, signal_name, column_name):
@@ -91,26 +92,28 @@ class DataProcessSignal:
                     DELETE FROM MODE_AUTO_SIGNAL WHERE mode_id = %s
                 """, (mode_auto_id,))
                 for signal_name in self.signal_table.rows.keys():
-                    variable_name = self.signal_table.get_value(signal_name, 'variable')
                     address = self.signal_table.get_value(signal_name, 'address')
                     read_register = self.signal_table.get_value(signal_name, 'read_register')
-                    read_value = self.signal_table.get_value(signal_name, 'read_value')
+                    read_value_on = self.signal_table.get_value(signal_name, 'read_value_on')
+                    read_value_off = self.signal_table.get_value(signal_name, 'read_value_off')
                     write_register = self.signal_table.get_value(signal_name, 'write_register')
-                    write_value = self.signal_table.get_value(signal_name, 'write_value')
+                    write_value_on = self.signal_table.get_value(signal_name, 'write_value_on')
+                    write_value_off = self.signal_table.get_value(signal_name, 'write_value_off')
 
                     cursor.execute("""
                         INSERT INTO MODE_AUTO_SIGNAL (
-                            signal_name, variable_name, address, read_register, 
-                            read_value, write_register, write_value, mode_id
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            signal_name, address, read_register, 
+                            read_value_on, read_value_off, write_register, write_value_on, write_value_off, mode_id
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """, (
                         signal_name,
-                        variable_name if variable_name else None,
                         address if address else None,
                         read_register if read_register else None,
-                        read_value if read_value else None,
+                        read_value_on if read_value_on else None,
+                        read_value_off if read_value_off else None,
                         write_register if write_register else None,
-                        write_value if write_value else None,
+                        write_value_on if write_value_on else None,
+                        write_value_off if write_value_off else None,
                         mode_auto_id
                     ))
                 connect_db.connection.commit()
@@ -134,8 +137,8 @@ class DataProcessSignal:
         if result := cursor.fetchone():
             mode_auto_id = result[0]
             cursor.execute("""
-                SELECT signal_name, variable_name, address, read_register, 
-                    read_value, write_register, write_value
+                SELECT signal_name, address, read_register, 
+                read_value_on, read_value_off, write_register, write_value_on, write_value_off
                 FROM MODE_AUTO_SIGNAL
                 WHERE mode_id = %s
             """, (mode_auto_id,))
@@ -152,52 +155,76 @@ class DataProcessSignal:
     def get_table_params(self):
         dict_params = {}
         dict_params['ready']= {}
+        dict_params['ready']['address'] = self.signal_table.get_value('ready', 'address')
         dict_params['ready']['read_register'] = self.signal_table.get_value('ready', 'read_register')
-        dict_params['ready']['read_value'] = self.signal_table.get_value('ready', 'read_value')
+        dict_params['ready']['read_value_on'] = self.signal_table.get_value('ready', 'read_value_on')
+        dict_params['ready']['read_value_off'] = self.signal_table.get_value('ready', 'read_value_off')
         dict_params['ready']['write_register'] = self.signal_table.get_value('ready', 'write_register')
-        dict_params['ready']['write_value'] = self.signal_table.get_value('ready', 'write_value')
+        dict_params['ready']['write_value_on'] = self.signal_table.get_value('ready', 'write_value_on')
+        dict_params['ready']['write_value_off'] = self.signal_table.get_value('ready', 'write_value_off')
         
         dict_params['run'] = {}
+        dict_params['run']['address'] = self.signal_table.get_value('run', 'address')
         dict_params['run']['read_register'] = self.signal_table.get_value('run', 'read_register')
-        dict_params['run']['read_value'] = self.signal_table.get_value('run', 'read_value')
+        dict_params['run']['read_value_on'] = self.signal_table.get_value('run', 'read_value_on')
+        dict_params['run']['read_value_off'] = self.signal_table.get_value('run', 'read_value_off')
         dict_params['run']['write_register'] = self.signal_table.get_value('run', 'write_register')
-        dict_params['run']['write_value'] = self.signal_table.get_value('run', 'write_value')
+        dict_params['run']['write_value_on'] = self.signal_table.get_value('run', 'write_value_on')
+        dict_params['run']['write_value_off'] = self.signal_table.get_value('run', 'write_value_off')
 
         dict_params['trigger'] = {}
+        dict_params['trigger']['address'] = self.signal_table.get_value('trigger', 'address')
         dict_params['trigger']['read_register'] = self.signal_table.get_value('trigger', 'read_register')
-        dict_params['trigger']['read_value'] = self.signal_table.get_value('trigger', 'read_value')
+        dict_params['trigger']['read_value_on'] = self.signal_table.get_value('trigger', 'read_value_on')
+        dict_params['trigger']['read_value_off'] = self.signal_table.get_value('trigger', 'read_value_off')
         dict_params['trigger']['write_register'] = self.signal_table.get_value('trigger', 'write_register')
-        dict_params['trigger']['write_value'] = self.signal_table.get_value('trigger', 'write_value')
+        dict_params['trigger']['write_value_on'] = self.signal_table.get_value('trigger', 'write_value_on')
+        dict_params['trigger']['write_value_off'] = self.signal_table.get_value('trigger', 'write_value_off')
 
         dict_params['busy'] = {}
+        dict_params['busy']['address'] = self.signal_table.get_value('busy', 'address')
         dict_params['busy']['read_register'] = self.signal_table.get_value('busy', 'read_register')
-        dict_params['busy']['read_value'] = self.signal_table.get_value('busy', 'read_value')
+        dict_params['busy']['read_value_on'] = self.signal_table.get_value('busy', 'read_value_on')
+        dict_params['busy']['read_value_off'] = self.signal_table.get_value('busy', 'read_value_off')
         dict_params['busy']['write_register'] = self.signal_table.get_value('busy', 'write_register')
-        dict_params['busy']['write_value'] = self.signal_table.get_value('busy', 'write_value')
+        dict_params['busy']['write_value_on'] = self.signal_table.get_value('busy', 'write_value_on')
+        dict_params['busy']['write_value_off'] = self.signal_table.get_value('busy', 'write_value_off')
 
         dict_params['gate'] = {}
+        dict_params['gate']['address'] = self.signal_table.get_value('gate', 'address')
         dict_params['gate']['read_register'] = self.signal_table.get_value('gate', 'read_register')
-        dict_params['gate']['read_value'] = self.signal_table.get_value('gate', 'read_value')
+        dict_params['gate']['read_value_on'] = self.signal_table.get_value('gate', 'read_value_on')
+        dict_params['gate']['read_value_off'] = self.signal_table.get_value('gate', 'read_value_off')
         dict_params['gate']['write_register'] = self.signal_table.get_value('gate', 'write_register')
-        dict_params['gate']['write_value'] = self.signal_table.get_value('gate', 'write_value')
+        dict_params['gate']['write_value_on'] = self.signal_table.get_value('gate', 'write_value_on')
+        dict_params['gate']['write_value_off'] = self.signal_table.get_value('gate', 'write_value_off')
 
         dict_params['complete'] = {}
+        dict_params['complete']['address'] = self.signal_table.get_value('complete', 'address')
         dict_params['complete']['read_register'] = self.signal_table.get_value('complete', 'read_register')
-        dict_params['complete']['read_value'] = self.signal_table.get_value('complete', 'read_value')
+        dict_params['complete']['read_value_on'] = self.signal_table.get_value('complete', 'read_value_on')
+        dict_params['complete']['read_value_off'] = self.signal_table.get_value('complete', 'read_value_off')
         dict_params['complete']['write_register'] = self.signal_table.get_value('complete', 'write_register')
-        dict_params['complete']['write_value'] = self.signal_table.get_value('complete', 'write_value')
+        dict_params['complete']['write_value_on'] = self.signal_table.get_value('complete', 'write_value_on')
+        dict_params['complete']['write_value_off'] = self.signal_table.get_value('complete', 'write_value_off')
         
         dict_params['reset'] = {}
+        dict_params['reset']['address'] = self.signal_table.get_value('reset', 'address')
         dict_params['reset']['read_register'] = self.signal_table.get_value('reset', 'read_register')
-        dict_params['reset']['read_value'] = self.signal_table.get_value('reset', 'read_value')
+        dict_params['reset']['read_value_on'] = self.signal_table.get_value('reset', 'read_value_on')
+        dict_params['reset']['read_value_off'] = self.signal_table.get_value('reset', 'read_value_off')
         dict_params['reset']['write_register'] = self.signal_table.get_value('reset', 'write_register')
-        dict_params['reset']['write_value'] = self.signal_table.get_value('reset', 'write_value')
+        dict_params['reset']['write_value_on'] = self.signal_table.get_value('reset', 'write_value_on')
+        dict_params['reset']['write_value_off'] = self.signal_table.get_value('reset', 'write_value_off')
 
         dict_params['reset_counter'] = {}
+        dict_params['reset_counter']['address'] = self.signal_table.get_value('reset_counter', 'address')
         dict_params['reset_counter']['read_register'] = self.signal_table.get_value('reset_counter', 'read_register')
-        dict_params['reset_counter']['read_value'] = self.signal_table.get_value('reset_counter', 'read_value')
+        dict_params['reset_counter']['read_value_on'] = self.signal_table.get_value('reset_counter', 'read_value_on')
+        dict_params['reset_counter']['read_value_off'] = self.signal_table.get_value('reset_counter', 'read_value_off')
         dict_params['reset_counter']['write_register'] = self.signal_table.get_value('reset_counter', 'write_register')
-        dict_params['reset_counter']['write_value'] = self.signal_table.get_value('reset_counter', 'write_value')
+        dict_params['reset_counter']['write_value_on'] = self.signal_table.get_value('reset_counter', 'write_value_on')
+        dict_params['reset_counter']['write_value_off'] = self.signal_table.get_value('reset_counter', 'write_value_off')
 
         return dict_params
     
@@ -210,18 +237,18 @@ class DataProcessSignal:
                     DELETE FROM SHOTXMODEL WHERE mode_id = %s
                 """, (mode_auto_id,))
 
-                row_count = self.uic.tableWidget_3.rowCount()
-                col_count = self.uic.tableWidget_3.columnCount()
+                row_count = self.uic.tableWidget_shotxmodel.rowCount()
+                col_count = self.uic.tableWidget_shotxmodel.columnCount()
                 list_insert = []
 
                 for row in range(row_count):
                     row_data = {}
                     for col in range(col_count):
-                        item = self.uic.tableWidget_3.item(row, col)
+                        item = self.uic.tableWidget_shotxmodel.item(row, col)
                         if item is not None:
                             row_data[col] = item.text()
                         else:
-                            widget = self.uic.tableWidget_3.cellWidget(row, col)
+                            widget = self.uic.tableWidget_shotxmodel.cellWidget(row, col)
                             if isinstance(widget, QComboBox):
                                 row_data[col] = widget.currentText()
                     if row_data:
@@ -255,24 +282,23 @@ class DataProcessSignal:
             ORDER BY shot ASC
         """
         cursor.execute(query, (mode_auto_id,))
-        results = cursor.fetchall()
-        self.uic.tableWidget_3.setRowCount(len(results))
-
-        for row_index, (shot, no_of_model) in enumerate(results):
-            shot_item = QTableWidgetItem(str(shot))
-            self.uic.tableWidget_3.setItem(row_index,0,shot_item)
-            combo = QComboBox()
-            combo.addItems([str(i + 1) for i in range(10)])
-            combo.setCurrentText(str(no_of_model))
-            self.uic.tableWidget_3.setCellWidget(row_index, 1, combo)
+        if results:=cursor.fetchall():
+            self.uic.tableWidget_shotxmodel.setRowCount(len(results))
+            for row_index, (shot, no_of_model) in enumerate(results):
+                shot_item = QTableWidgetItem(str(shot))
+                self.uic.tableWidget_shotxmodel.setItem(row_index,0,shot_item)
+                combo = QComboBox()
+                combo.addItems([str(i + 1) for i in range(10)])
+                combo.setCurrentText(str(no_of_model))
+                self.uic.tableWidget_shotxmodel.setCellWidget(row_index, 1, combo)
 
     def dict_shotxmodel(self):
-        row_count = self.uic.tableWidget_3.rowCount()
+        row_count = self.uic.tableWidget_shotxmodel.rowCount()
         row_data = {}
         for row in range(row_count):
-            item = self.uic.tableWidget_3.item(row,0)
+            item = self.uic.tableWidget_shotxmodel.item(row,0)
             shot = item.text()
-            widget_model = self.uic.tableWidget_3.cellWidget(row, 1)
+            widget_model = self.uic.tableWidget_shotxmodel.cellWidget(row, 1)
             if isinstance(widget_model, QComboBox):
                 model = widget_model.currentText()
             row_data[shot] = model
